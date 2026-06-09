@@ -10,6 +10,14 @@ export function writeJson(response: ServerResponse, statusCode: number, body: un
   response.end(`${JSON.stringify(body, null, 2)}\n`)
 }
 
+export function writeHtml(response: ServerResponse, statusCode: number, body: string) {
+  response.writeHead(statusCode, {
+    'access-control-allow-origin': '*',
+    'content-type': 'text/html; charset=utf-8',
+  })
+  response.end(body)
+}
+
 export async function readJson(request: IncomingMessage) {
   const chunks: Buffer[] = []
 
