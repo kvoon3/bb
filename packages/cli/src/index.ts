@@ -47,6 +47,78 @@ cli
     await printResult(await rpc(options, { method: 'bookmarks.get', params: { id } }), options)
   })
 
+cli
+  .command('bookmarks:create', 'Create a bookmark or folder')
+  .option('--title <title>', 'Bookmark title')
+  .option('--url <url>', 'Bookmark URL')
+  .option('--parent-id <parentId>', 'Parent folder id')
+  .option('--index <index>', 'Position index within the parent folder')
+  .action(
+    async (
+      options: GlobalOptions & { title?: string; url?: string; parentId?: string; index?: string },
+    ) => {
+      await printResult(
+        await rpc(options, {
+          method: 'bookmarks.create',
+          params: {
+            title: options.title,
+            url: options.url,
+            parentId: options.parentId === undefined ? undefined : String(options.parentId),
+            index: options.index === undefined ? undefined : Number(options.index),
+          },
+        }),
+        options,
+      )
+    },
+  )
+
+cli
+  .command('bookmarks:update <id>', 'Update a bookmark title or URL')
+  .option('--title <title>', 'New bookmark title')
+  .option('--url <url>', 'New bookmark URL')
+  .action(async (id: string, options: GlobalOptions & { title?: string; url?: string }) => {
+    await printResult(
+      await rpc(options, {
+        method: 'bookmarks.update',
+        params: { id, title: options.title, url: options.url },
+      }),
+      options,
+    )
+  })
+
+cli
+  .command('bookmarks:move <id>', 'Move a bookmark to another folder or position')
+  .option('--parent-id <parentId>', 'New parent folder id')
+  .option('--index <index>', 'New position index')
+  .action(async (id: string, options: GlobalOptions & { parentId?: string; index?: string }) => {
+    await printResult(
+      await rpc(options, {
+        method: 'bookmarks.move',
+        params: {
+          id,
+          parentId: options.parentId === undefined ? undefined : String(options.parentId),
+          index: options.index === undefined ? undefined : Number(options.index),
+        },
+      }),
+      options,
+    )
+  })
+
+cli
+  .command('bookmarks:remove <id>', 'Remove a bookmark or empty folder')
+  .action(async (id: string, options: GlobalOptions) => {
+    await printResult(await rpc(options, { method: 'bookmarks.remove', params: { id } }), options)
+  })
+
+cli
+  .command('bookmarks:remove-tree <id>', 'Recursively remove a bookmark folder tree')
+  .action(async (id: string, options: GlobalOptions) => {
+    await printResult(
+      await rpc(options, { method: 'bookmarks.removeTree', params: { id } }),
+      options,
+    )
+  })
+
 cli.help()
 cli.version('0.0.0')
 cli.parse(normalizeArgv(process.argv))
