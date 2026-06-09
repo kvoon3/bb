@@ -119,6 +119,77 @@ cli
     )
   })
 
+cli
+  .command('bookmarks:unused', 'List bookmarks not visited recently')
+  .option('--days <days>', 'Number of days threshold', { default: '90' })
+  .action(async (options: GlobalOptions & { days?: string }) => {
+    const days = Number(options.days ?? '90')
+    const threshold = Date.now() - days * 24 * 60 * 60 * 1000
+
+    const result = await rpc(options, { method: 'bookmarks.tree' })
+    if (!isOkResult(result)) {
+      await printResult(result, options)
+      return
+    }
+
+    const items: Array<{
+      title: string
+      url: string
+      id: string
+      dateLastUsed?: number
+      dateAdded: number
+      folderPath: string
+    }> = []
+
+    function walk(nodes: Array<Record<string, unknown>>, path: string) {
+      for (const n of nodes) {
+        const title = typeof n.title === 'string' ? n.title : ''
+        const nodePath = path ? `${path} / ${title}` : title
+        const url = typeof n.url === 'string' ? n.url : ''
+        if (url) {
+          items.push({
+            title: title || url,
+            url,
+            id: String(n.id),
+            dateLastUsed: typeof n.dateLastUsed === 'number' ? n.dateLastUsed : undefined,
+            dateAdded: Number(n.dateAdded),
+            folderPath: path,
+          })
+        }
+        if (Array.isArray(n.children)) {
+          walk(n.children as Array<Record<string, unknown>>, nodePath)
+        }
+      }
+    }
+
+    walk((result.result ?? []) as Array<Record<string, unknown>>, '')
+
+    const unused = items.filter((n) => !n.dateLastUsed || n.dateLastUsed < threshold)
+    unused.sort((a, b) => {
+      if (!a.dateLastUsed) return 1
+      if (!b.dateLastUsed) return -1
+      return a.dateLastUsed - b.dateLastUsed
+    })
+
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, count: unused.length, items: unused }, null, 2))
+      return
+    }
+
+    console.log(`Found ${unused.length} bookmarks unused in the last ${days} days\n`)
+    for (const n of unused) {
+      const lastUsed = n.dateLastUsed
+        ? new Date(n.dateLastUsed).toISOString().slice(0, 10)
+        : 'Never'
+      console.log(`[${lastUsed}] ${n.title}`)
+      console.log(`  ${n.url}`)
+      if (n.folderPath) {
+        console.log(`  in: ${n.folderPath}`)
+      }
+      console.log()
+    }
+  })
+
 cli.help()
 cli.version('0.0.0')
 cli.parse(normalizeArgv(process.argv))
