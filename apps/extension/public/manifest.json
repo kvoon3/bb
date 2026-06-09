@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "BB Bookmarks Bridge",
+  "version": "0.0.0",
+  "description": "Expose browser bookmarks to a local AI-agent daemon.",
+  "permissions": ["bookmarks"],
+  "host_permissions": ["http://127.0.0.1:31337/*", "ws://127.0.0.1:31337/*"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "action": {
+    "default_popup": "index.html"
+  }
+}
