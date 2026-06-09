@@ -6,68 +6,66 @@ import {
   type ExtensionResponse,
 } from '@bb/protocol'
 
-const reconnectDelayMs = 1_500
-const keepAliveAlarmName = 'bb-keep-alive'
-const keepAliveIntervalMinutes = 0.5
+const offscreenPath = 'offscreen.html'
+const offscreenUrl = chrome.runtime.getURL(offscreenPath)
 const daemonUrl = daemonWebSocketUrl(DEFAULT_DAEMON_PORT, DEFAULT_DAEMON_HOST)
 
-let socket: WebSocket | undefined
-
-ensureConnected()
-startKeepAlive()
+let offscreenConnected = false
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.type === 'offscreen:request') {
+    void handleOffscreenRequest(message.data).then(sendResponse)
+    return true
+  }
+
+  if (message?.type === 'offscreen:connected') {
+    offscreenConnected = true
+    return false
+  }
+
+  if (message?.type === 'offscreen:disconnected') {
+    offscreenConnected = false
+    return false
+  }
+
   if (message?.type === 'status') {
-    ensureConnected()
-    sendResponse({ connected: socket?.readyState === WebSocket.OPEN, daemonUrl })
+    void ensureOffscreenDocument().then(() => {
+      sendResponse({ connected: offscreenConnected, daemonUrl })
+    })
+    return true
   }
+
+  return false
 })
 
-chrome.runtime.onStartup.addListener(startKeepAlive)
-chrome.runtime.onInstalled.addListener(startKeepAlive)
+chrome.runtime.onStartup.addListener(ensureOffscreenDocument)
+chrome.runtime.onInstalled.addListener(ensureOffscreenDocument)
 
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === keepAliveAlarmName) {
-    ensureConnected()
-  }
-})
-
-function startKeepAlive() {
-  void chrome.alarms.create(keepAliveAlarmName, {
-    delayInMinutes: keepAliveIntervalMinutes,
-    periodInMinutes: keepAliveIntervalMinutes,
-  })
-}
-
-function ensureConnected() {
-  if (
-    socket &&
-    (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)
-  ) {
+async function ensureOffscreenDocument(): Promise<void> {
+  if (await hasOffscreenDocument()) {
     return
   }
-
-  connect()
-}
-
-function connect() {
-  socket = new WebSocket(daemonUrl)
-
-  socket.addEventListener('message', async (event) => {
-    const response = await handleRequest(parseRequest(event.data))
-    socket?.send(JSON.stringify(response))
-  })
-
-  socket.addEventListener('close', () => {
-    setTimeout(ensureConnected, reconnectDelayMs)
-  })
-
-  socket.addEventListener('error', () => {
-    socket?.close()
+  offscreenConnected = false
+  await chrome.offscreen.createDocument({
+    url: offscreenPath,
+    reasons: [chrome.offscreen.Reason.WORKERS],
+    justification: 'Maintain a persistent WebSocket connection to the local BB daemon',
   })
 }
 
-async function handleRequest(request: ExtensionRequest | undefined): Promise<ExtensionResponse> {
+async function hasOffscreenDocument(): Promise<boolean> {
+  if (typeof chrome.runtime.getContexts === 'undefined') {
+    return false
+  }
+  const matches = await chrome.runtime.getContexts({})
+  return matches.some(
+    (context) =>
+      context.contextType === 'OFFSCREEN_DOCUMENT' && context.documentUrl === offscreenUrl,
+  )
+}
+
+async function handleOffscreenRequest(data: unknown): Promise<ExtensionResponse> {
+  const request = parseRequest(data)
   if (!request) {
     return { id: 'unknown', type: 'response', ok: false, error: 'Invalid request' }
   }
