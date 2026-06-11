@@ -70,6 +70,9 @@ importers:
 
   packages/cli:
     dependencies:
+      '@bb/daemon':
+        specifier: workspace:*
+        version: link:../daemon
       '@bb/protocol':
         specifier: workspace:*
         version: link:../protocol

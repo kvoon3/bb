@@ -9,8 +9,8 @@
   },
   "scripts": {
     "build": "vp pack",
-    "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.mjs",
+    "dev": "tsx watch src/main.ts",
+    "start": "node -e \"import('./dist/index.mjs').then(m => m.startDaemon())\"",
     "check": "vp check"
   },
   "dependencies": {

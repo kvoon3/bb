@@ -26,6 +26,7 @@
     "prepublishOnly": "vp run build"
   },
   "dependencies": {
+    "@bb/daemon": "workspace:*",
     "@bb/protocol": "workspace:*",
     "@bb/utils": "workspace:*",
     "cac": "^6.7.14"

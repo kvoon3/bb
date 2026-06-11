@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { cac } from 'cac'
+import { startDaemon } from '@bb/daemon'
 import {
   DEFAULT_DAEMON_HOST,
   DEFAULT_DAEMON_PORT,
@@ -191,6 +192,30 @@ cli
       console.log()
     }
   })
+
+cli
+  .command('daemon', 'Start the bb daemon in the foreground')
+  .action(async (options: GlobalOptions) => {
+    const instance = startDaemon({
+      host: options.host,
+      port: options.port ? Number(options.port) : undefined,
+    })
+
+    process.on('SIGINT', async () => {
+      console.log('\nShutting down daemon...')
+      await instance.close()
+      process.exit(0)
+    })
+
+    process.on('SIGTERM', async () => {
+      await instance.close()
+      process.exit(0)
+    })
+  })
+
+cli.command('daemon:stop', 'Stop the running bb daemon').action(async (options: GlobalOptions) => {
+  await printResult(await request(options, '/shutdown', { method: 'POST' }), options)
+})
 
 cli.help()
 cli.version(packageJson.version)

@@ -2,8 +2,18 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { getExtensionState, sendToExtension } from './extension.js'
 import { readJson, writeHtml, writeJson } from './utils.js'
 
-export async function routeHttp(request: IncomingMessage, response: ServerResponse) {
+export async function routeHttp(
+  request: IncomingMessage,
+  response: ServerResponse,
+  onShutdown?: () => void,
+) {
   const url = new URL(request.url ?? '/', `http://localhost`)
+
+  if (request.method === 'POST' && url.pathname === '/shutdown') {
+    writeJson(response, 200, { ok: true, message: 'Shutting down' })
+    onShutdown?.()
+    return
+  }
 
   if (request.method === 'GET' && url.pathname === '/health') {
     const { connected, origin } = getExtensionState()
