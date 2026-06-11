@@ -44,7 +44,3 @@ export function parseExtensionResponse(data: WebSocket.RawData): ExtensionRespon
     return undefined
   }
 }
-
-export function errorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error)
-}

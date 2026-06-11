@@ -6,6 +6,8 @@ import {
   daemonBaseUrl,
   type BookmarkCommand,
 } from '@bb/protocol'
+import { errorMessage } from '@bb/utils'
+import packageJson from '../package.json' with { type: 'json' }
 
 const cli = cac('bb')
 
@@ -191,8 +193,8 @@ cli
   })
 
 cli.help()
-cli.version('0.0.0')
-cli.parse(normalizeArgv(process.argv))
+cli.version(packageJson.version)
+cli.parse(process.argv[2] === '--' ? process.argv.toSpliced(2, 1) : process.argv)
 
 async function rpc(options: GlobalOptions, body: BookmarkCommand) {
   return await request(options, '/rpc', {
@@ -203,7 +205,11 @@ async function rpc(options: GlobalOptions, body: BookmarkCommand) {
 }
 
 async function request(options: GlobalOptions, path: string, init?: RequestInit) {
-  const url = `${baseUrl(options)}${path}`
+  const baseUrl = daemonBaseUrl(
+    Number(options.port ?? DEFAULT_DAEMON_PORT),
+    options.host ?? DEFAULT_DAEMON_HOST,
+  )
+  const url = `${baseUrl}${path}`
 
   try {
     const response = await fetch(url, init)
@@ -211,20 +217,9 @@ async function request(options: GlobalOptions, path: string, init?: RequestInit)
   } catch (error) {
     return {
       ok: false,
-      error: `Could not reach daemon at ${baseUrl(options)}. Start it with "pnpm dev:daemon". ${errorMessage(error)}`,
+      error: `Could not reach daemon at ${baseUrl}. Start it with "pnpm dev:daemon". ${errorMessage(error)}`,
     }
   }
-}
-
-function baseUrl(options: GlobalOptions) {
-  return daemonBaseUrl(
-    Number(options.port ?? DEFAULT_DAEMON_PORT),
-    options.host ?? DEFAULT_DAEMON_HOST,
-  )
-}
-
-function normalizeArgv(argv: string[]) {
-  return argv[2] === '--' ? argv.toSpliced(2, 1) : argv
 }
 
 async function printResult(result: unknown, options: GlobalOptions) {
@@ -255,12 +250,4 @@ function errorText(value: unknown) {
   }
 
   return 'Unexpected daemon response'
-}
-
-function errorMessage(error: unknown) {
-  if (error instanceof Error) {
-    return error.message
-  }
-
-  return String(error)
 }

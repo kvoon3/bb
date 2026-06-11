@@ -5,6 +5,7 @@ import {
   type ExtensionRequest,
   type ExtensionResponse,
 } from '@bb/protocol'
+import { errorMessage } from '@bb/utils'
 
 const offscreenPath = 'offscreen.html'
 const offscreenUrl = chrome.runtime.getURL(offscreenPath)
@@ -65,7 +66,14 @@ async function hasOffscreenDocument(): Promise<boolean> {
 }
 
 async function handleOffscreenRequest(data: unknown): Promise<ExtensionResponse> {
-  const request = parseRequest(data)
+  let request: ExtensionRequest | undefined
+  try {
+    const parsed = JSON.parse(String(data)) as ExtensionRequest
+    request = parsed.type === 'request' ? parsed : undefined
+  } catch {
+    request = undefined
+  }
+
   if (!request) {
     return { id: 'unknown', type: 'response', ok: false, error: 'Invalid request' }
   }
@@ -73,29 +81,39 @@ async function handleOffscreenRequest(data: unknown): Promise<ExtensionResponse>
   try {
     switch (request.method) {
       case 'bookmarks.tree':
-        return { id: request.id, type: 'response', ok: true, result: await getTree() }
+        return {
+          id: request.id,
+          type: 'response',
+          ok: true,
+          result: await chrome.bookmarks.getTree(),
+        }
       case 'bookmarks.search':
         return {
           id: request.id,
           type: 'response',
           ok: true,
-          result: await search(request.params.query),
+          result: await chrome.bookmarks.search(request.params.query),
         }
       case 'bookmarks.get':
-        return { id: request.id, type: 'response', ok: true, result: await get(request.params.id) }
+        return {
+          id: request.id,
+          type: 'response',
+          ok: true,
+          result: await chrome.bookmarks.get(request.params.id),
+        }
       case 'bookmarks.children':
         return {
           id: request.id,
           type: 'response',
           ok: true,
-          result: await getChildren(request.params.id),
+          result: await chrome.bookmarks.getChildren(request.params.id),
         }
       case 'bookmarks.create':
         return {
           id: request.id,
           type: 'response',
           ok: true,
-          result: await create(request.params),
+          result: await chrome.bookmarks.create(request.params),
         }
       case 'bookmarks.update': {
         const { id: updateId, ...updateChanges } = request.params
@@ -103,7 +121,7 @@ async function handleOffscreenRequest(data: unknown): Promise<ExtensionResponse>
           id: request.id,
           type: 'response',
           ok: true,
-          result: await update(updateId, updateChanges),
+          result: await chrome.bookmarks.update(updateId, updateChanges),
         }
       }
       case 'bookmarks.move': {
@@ -112,66 +130,17 @@ async function handleOffscreenRequest(data: unknown): Promise<ExtensionResponse>
           id: request.id,
           type: 'response',
           ok: true,
-          result: await move(moveId, moveChanges),
+          result: await chrome.bookmarks.move(moveId, moveChanges),
         }
       }
       case 'bookmarks.remove':
-        await remove(request.params.id)
+        await chrome.bookmarks.remove(request.params.id)
         return { id: request.id, type: 'response', ok: true, result: undefined }
       case 'bookmarks.removeTree':
-        await removeTree(request.params.id)
+        await chrome.bookmarks.removeTree(request.params.id)
         return { id: request.id, type: 'response', ok: true, result: undefined }
     }
   } catch (error) {
     return { id: request.id, type: 'response', ok: false, error: errorMessage(error) }
   }
-}
-
-function getTree() {
-  return chrome.bookmarks.getTree()
-}
-
-function search(query: string) {
-  return chrome.bookmarks.search(query)
-}
-
-function get(id: string) {
-  return chrome.bookmarks.get(id)
-}
-
-function getChildren(id: string) {
-  return chrome.bookmarks.getChildren(id)
-}
-
-function create(params: { parentId?: string; title?: string; url?: string; index?: number }) {
-  return chrome.bookmarks.create(params)
-}
-
-function update(id: string, params: { title?: string; url?: string }) {
-  return chrome.bookmarks.update(id, params)
-}
-
-function move(id: string, params: { parentId?: string; index?: number }) {
-  return chrome.bookmarks.move(id, params)
-}
-
-function remove(id: string) {
-  return chrome.bookmarks.remove(id)
-}
-
-function removeTree(id: string) {
-  return chrome.bookmarks.removeTree(id)
-}
-
-function parseRequest(data: unknown): ExtensionRequest | undefined {
-  try {
-    const parsed = JSON.parse(String(data)) as ExtensionRequest
-    return parsed.type === 'request' ? parsed : undefined
-  } catch {
-    return undefined
-  }
-}
-
-function errorMessage(error: unknown) {
-  return error instanceof Error ? error.message : String(error)
 }

@@ -9,6 +9,7 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "noEmit": false,
+    "resolveJsonModule": true,
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,

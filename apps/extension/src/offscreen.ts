@@ -35,9 +35,16 @@ function connect() {
       })
       socket?.send(JSON.stringify(response))
     } catch {
+      let id: string
+      try {
+        id = (JSON.parse(requestData) as ExtensionRequest).id
+      } catch {
+        id = 'unknown'
+      }
+
       socket?.send(
         JSON.stringify({
-          id: parseRequestId(requestData),
+          id,
           type: 'response',
           ok: false,
           error: 'Service worker is not available',
@@ -54,13 +61,4 @@ function connect() {
   socket.addEventListener('error', () => {
     socket?.close()
   })
-}
-
-function parseRequestId(data: string): string {
-  try {
-    const parsed = JSON.parse(data) as ExtensionRequest
-    return parsed.id
-  } catch {
-    return 'unknown'
-  }
 }

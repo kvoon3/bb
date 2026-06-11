@@ -9,7 +9,9 @@
     "dev:extension": "vp run extension#dev",
     "dev:daemon": "vp run @bb/daemon#dev",
     "bb": "node packages/cli/dist/index.mjs",
-    "bb:dev": "pnpm --silent --filter @bb/cli exec tsx src/index.ts"
+    "bb:dev": "pnpm --silent --filter @bb/cli exec tsx src/index.ts",
+    "release": "vpx bumpp",
+    "up": "vpx taze -I major"
   },
   "devDependencies": {
     "vite-plus": "catalog:"
@@ -17,5 +19,5 @@
   "engines": {
     "node": ">=22.12.0"
   },
-  "packageManager": "pnpm@9.15.6"
+  "packageManager": "pnpm@11.5.3"
 }

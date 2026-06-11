@@ -1,9 +1,10 @@
 import { createServer } from 'node:http'
 import { WebSocketServer } from 'ws'
+import { errorMessage } from '@bb/utils'
 import { host, port } from './config.js'
 import { handleWebSocketConnection, isWebSocketPath } from './extension.js'
 import { routeHttp } from './routes.js'
-import { errorMessage, writeJson } from './utils.js'
+import { writeJson } from './utils.js'
 
 const server = createServer(async (request, response) => {
   try {
