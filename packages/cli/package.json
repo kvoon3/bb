@@ -22,7 +22,8 @@
     "build": "vp pack",
     "dev": "tsx src/index.ts",
     "check": "vp check",
-    "prepublishOnly": "vp run build"
+    "prepublishOnly": "vp run build",
+    "publish": "pnpm publish"
   },
   "dependencies": {
     "@bb/protocol": "workspace:*",
