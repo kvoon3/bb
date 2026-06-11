@@ -9,7 +9,7 @@
     "dev:extension": "vp run extension#dev",
     "dev:daemon": "vp run @bb/daemon#dev",
     "bb": "node packages/cli/dist/index.mjs",
-    "bb:dev": "pnpm --silent --filter @bb/cli exec tsx src/index.ts",
+    "bb:dev": "pnpm --silent --filter @kvoon/bb-cli exec tsx src/index.ts",
     "release": "vpx bumpp",
     "up": "vpx taze -I major"
   },

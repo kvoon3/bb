@@ -1,5 +1,5 @@
 {
-  "name": "@bb/cli",
+  "name": "@kvoon/bb-cli",
   "version": "0.0.0",
   "description": "CLI for bb",
   "license": "MIT",
@@ -21,9 +21,9 @@
   "scripts": {
     "build": "vp pack",
     "dev": "tsx src/index.ts",
+    "start": "node dist/index.mjs",
     "check": "vp check",
-    "prepublishOnly": "vp run build",
-    "publish": "pnpm publish"
+    "prepublishOnly": "vp run build"
   },
   "dependencies": {
     "@bb/protocol": "workspace:*",
