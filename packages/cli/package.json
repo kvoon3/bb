@@ -1,6 +1,6 @@
 {
   "name": "@kvoon/bb-cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "CLI for bb",
   "license": "MIT",
   "repository": {
@@ -26,12 +26,12 @@
     "prepublishOnly": "vp run build"
   },
   "dependencies": {
-    "@bb/daemon": "workspace:*",
-    "@bb/protocol": "workspace:*",
-    "@bb/utils": "workspace:*",
     "cac": "^6.7.14"
   },
   "devDependencies": {
+    "@bb/daemon": "workspace:*",
+    "@bb/protocol": "workspace:*",
+    "@bb/utils": "workspace:*",
     "@types/node": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
