@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "vp pack",
-    "dev": "tsx watch src/main.ts",
+    "dev": "tsx watch src/index.ts",
     "start": "node -e \"import('./dist/index.mjs').then(m => m.startDaemon())\"",
     "check": "vp check"
   },
@@ -17,6 +17,7 @@
     "@bb/protocol": "workspace:*",
     "@bb/utils": "workspace:*",
     "birpc": "^4.0.0",
+    "h3": "^1.15.11",
     "ws": "^8.18.3"
   },
   "devDependencies": {

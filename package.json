@@ -7,8 +7,7 @@
     "dev": "vp run website#dev",
     "dev:extension": "vp run extension#dev",
     "dev:daemon": "vp run @bb/daemon#dev",
-    "bb": "node packages/cli/dist/index.mjs",
-    "bb:dev": "pnpm --silent --filter @kvoon/bb-cli exec tsx src/index.ts",
+    "bb": "vp run @kvoon/bb-cli#dev",
     "up": "vpx taze -I major",
     "build": "pnpm -r build"
   },

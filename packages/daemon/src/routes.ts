@@ -1,10 +1,17 @@
-import type { IncomingMessage, ServerResponse } from 'node:http'
+import type { H3Event } from 'h3'
+import {
+  createError,
+  createRouter,
+  defineEventHandler,
+  getQuery,
+  getRouterParams,
+  readBody,
+  setResponseHeader,
+} from 'h3'
 import type { WebSocket } from 'ws'
 import { createBirpc, type BirpcReturn } from 'birpc'
-import { EXTENSION_WS_PATH, type ExtensionRpc, type RpcResponse } from '@bb/protocol'
-import { errorMessage } from '@bb/utils'
+import { EXTENSION_WS_PATH, type ExtensionRpc } from '@bb/protocol'
 import { host, port, requestTimeoutMs } from './config.js'
-import { readJson, writeHtml, writeJson } from './utils.js'
 
 let extensionSocket: WebSocket | undefined
 let extensionRpc: BirpcReturn<ExtensionRpc> | undefined
@@ -40,111 +47,118 @@ export function handleWebSocketConnection(
   })
 }
 
-export async function routeHttp(
-  request: IncomingMessage,
-  response: ServerResponse,
-  onShutdown?: () => void,
-) {
-  const url = new URL(request.url ?? '/', `http://localhost`)
+export function createAppRouter(onShutdown?: () => void) {
+  const router = createRouter()
 
-  if (request.method === 'POST' && url.pathname === '/shutdown') {
-    writeJson(response, 200, { ok: true, message: 'Shutting down' })
-    onShutdown?.()
-    return
-  }
+  router.post(
+    '/shutdown',
+    defineEventHandler(() => {
+      onShutdown?.()
+      return { message: 'Shutting down' }
+    }),
+  )
 
-  if (request.method === 'GET' && url.pathname === '/health') {
-    const { connected, origin } = getExtensionState()
-    writeJson(response, 200, {
-      ok: true,
-      daemon: 'ready',
-      extensionConnected: connected,
-      extensionOrigin: origin,
-    })
-    return
-  }
+  router.get(
+    '/health',
+    defineEventHandler(() => {
+      const { connected, origin } = getExtensionState()
+      return {
+        daemon: 'ready',
+        extensionConnected: connected,
+        extensionOrigin: origin,
+      }
+    }),
+  )
 
-  const rpc = extensionRpc
-  if (!rpc || !extensionSocket || extensionSocket.readyState !== extensionSocket.OPEN) {
-    writeJson(response, 200, { ok: false, error: 'Browser extension is not connected' })
-    return
-  }
+  router.get(
+    '/bookmarks/tree',
+    defineEventHandler(async () => {
+      return requireRpc().getTree()
+    }),
+  )
 
-  if (request.method === 'GET' && url.pathname === '/bookmarks/tree') {
-    writeJson(response, 200, await tryRpc(() => rpc.getTree()))
-    return
-  }
+  router.get(
+    '/bookmarks/search',
+    defineEventHandler(async (event) => {
+      const rawQuery = getQuery(event).q
+      const query = Array.isArray(rawQuery) ? rawQuery[0] : (rawQuery ?? '')
+      return requireRpc().search(query)
+    }),
+  )
 
-  if (request.method === 'GET' && url.pathname === '/bookmarks/search') {
-    const query = url.searchParams.get('q') ?? ''
-    writeJson(response, 200, await tryRpc(() => rpc.search(query)))
-    return
-  }
+  router.post(
+    '/bookmarks',
+    defineEventHandler(async (event) => {
+      return requireRpc().create(await readBody(event))
+    }),
+  )
 
-  if (request.method === 'POST' && url.pathname === '/bookmarks') {
-    const body = await readJson(request)
-    writeJson(response, 200, await tryRpc(() => rpc.create(body)))
-    return
-  }
+  router.get(
+    '/bookmarks/unused',
+    defineEventHandler(async (event) => {
+      const days = Number(getQuery(event).days ?? '90')
+      const tree = await requireRpc().getTree()
+      setResponseHeader(event, 'content-type', 'text/html; charset=utf-8')
+      return renderUnusedHtml(tree as unknown[], days)
+    }),
+  )
 
-  if (request.method === 'GET' && url.pathname === '/bookmarks/unused') {
-    const days = Number(url.searchParams.get('days') ?? '90')
-    const result = await tryRpc(() => rpc.getTree())
-    if (!result.ok) {
-      writeJson(response, 200, result)
-      return
-    }
-    writeHtml(response, 200, renderUnusedHtml(result.result as unknown[], days))
-    return
-  }
+  router.get(
+    '/bookmarks/:id',
+    defineEventHandler(async (event) => {
+      return requireRpc().get(decodeId(event))
+    }),
+  )
 
-  const bookmarkIdMatch = url.pathname.match(/^\/bookmarks\/([^/]+)$/)
+  router.patch(
+    '/bookmarks/:id',
+    defineEventHandler(async (event) => {
+      const body = await readBody(event)
+      const { id: _ignored, ...changes } = body as { id?: unknown; title?: string; url?: string }
+      return requireRpc().update(decodeId(event), changes)
+    }),
+  )
 
-  if (request.method === 'GET' && bookmarkIdMatch) {
-    const id = decodeURIComponent(bookmarkIdMatch[1])
-    writeJson(response, 200, await tryRpc(() => rpc.get(id)))
-    return
-  }
+  router.delete(
+    '/bookmarks/:id',
+    defineEventHandler(async (event) => {
+      return requireRpc().remove(decodeId(event))
+    }),
+  )
 
-  if (request.method === 'PATCH' && bookmarkIdMatch) {
-    const id = decodeURIComponent(bookmarkIdMatch[1])
-    const body = await readJson(request)
-    const { id: _ignored, ...changes } = body as { id?: unknown; title?: string; url?: string }
-    writeJson(response, 200, await tryRpc(() => rpc.update(id, changes)))
-    return
-  }
+  router.post(
+    '/bookmarks/:id/move',
+    defineEventHandler(async (event) => {
+      const body = await readBody(event)
+      const { id: _ignored, ...changes } = body as {
+        id?: unknown
+        parentId?: string
+        index?: number
+      }
+      return requireRpc().move(decodeId(event), changes)
+    }),
+  )
 
-  if (request.method === 'DELETE' && bookmarkIdMatch) {
-    const id = decodeURIComponent(bookmarkIdMatch[1])
-    writeJson(response, 200, await tryRpc(() => rpc.remove(id)))
-    return
-  }
+  router.delete(
+    '/bookmarks/:id/tree',
+    defineEventHandler(async (event) => {
+      return requireRpc().removeTree(decodeId(event))
+    }),
+  )
 
-  const moveMatch = url.pathname.match(/^\/bookmarks\/([^/]+)\/move$/)
-  if (request.method === 'POST' && moveMatch) {
-    const id = decodeURIComponent(moveMatch[1])
-    const body = await readJson(request)
-    const { id: _ignored, ...changes } = body as { id?: unknown; parentId?: string; index?: number }
-    writeJson(response, 200, await tryRpc(() => rpc.move(id, changes)))
-    return
-  }
-
-  const treeMatch = url.pathname.match(/^\/bookmarks\/([^/]+)\/tree$/)
-  if (request.method === 'DELETE' && treeMatch) {
-    const id = decodeURIComponent(treeMatch[1])
-    writeJson(response, 200, await tryRpc(() => rpc.removeTree(id)))
-    return
-  }
-
-  writeJson(response, 404, { ok: false, error: 'Not found' })
+  return router
 }
 
-async function tryRpc<T>(fn: () => Promise<T>): Promise<RpcResponse> {
-  try {
-    return { ok: true, result: await fn() }
-  } catch (error) {
-    return { ok: false, error: errorMessage(error) }
+function requireRpc() {
+  const rpc = extensionRpc
+  if (!rpc || !extensionSocket || extensionSocket.readyState !== extensionSocket.OPEN) {
+    throw createError({ statusCode: 503, statusMessage: 'Browser extension is not connected' })
   }
+  return rpc
+}
+
+function decodeId(event: H3Event): string {
+  return decodeURIComponent(getRouterParams(event).id as string)
 }
 
 function renderUnusedHtml(nodes: unknown[], days: number): string {

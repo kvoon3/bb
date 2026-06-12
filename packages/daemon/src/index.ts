@@ -1,11 +1,18 @@
 import { createServer } from 'node:http'
 import type { Server } from 'node:http'
+import {
+  createApp,
+  createError,
+  defineEventHandler,
+  send,
+  setResponseHeader,
+  setResponseStatus,
+  toNodeListener,
+} from 'h3'
 import { WebSocketServer } from 'ws'
 import { EXTENSION_WS_PATH } from '@bb/protocol'
-import { errorMessage } from '@bb/utils'
 import { host as defaultHost, port as defaultPort } from './config.js'
-import { handleWebSocketConnection, routeHttp } from './routes.js'
-import { writeJson } from './utils.js'
+import { createAppRouter, handleWebSocketConnection } from './routes.js'
 
 export interface DaemonInstance {
   server: Server
@@ -19,14 +26,23 @@ export function startDaemon(options?: { host?: string; port?: number }): DaemonI
   const p = options?.port ?? defaultPort
   const url = `http://${h}:${p}`
 
-  const server = createServer(async (request, response) => {
-    try {
-      await routeHttp(request, response, shutdown)
-    } catch (error) {
-      writeJson(response, 500, { ok: false, error: errorMessage(error) })
-    }
+  const app = createApp({
+    onError: (error, event) => {
+      const h3Error = createError(error)
+      setResponseStatus(event, h3Error.statusCode ?? 500)
+      return send(event, h3Error.statusMessage || h3Error.message)
+    },
   })
 
+  app.use(
+    defineEventHandler(async (event) => {
+      setResponseHeader(event, 'access-control-allow-origin', '*')
+    }),
+  )
+
+  app.use(createAppRouter(shutdown))
+
+  const server = createServer(toNodeListener(app))
   const wsServer = new WebSocketServer({ noServer: true })
 
   server.on('upgrade', (request, socket, head) => {

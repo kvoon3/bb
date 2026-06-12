@@ -21,28 +21,33 @@ cli
 cli
   .command('health', 'Check daemon and extension status')
   .action(async (options: GlobalOptions) => {
-    await printResult(await request(options, '/health'), options)
+    console.log(JSON.stringify(await request(options, '/health'), null, 2))
   })
 
 cli
   .command('bookmarks:tree', 'Read the complete browser bookmark tree')
   .action(async (options: GlobalOptions) => {
-    await printResult(await request(options, '/bookmarks/tree'), options)
+    console.log(JSON.stringify(await request(options, '/bookmarks/tree'), null, 2))
   })
 
 cli
   .command('bookmarks:search <query>', 'Search browser bookmarks')
   .action(async (query: string, options: GlobalOptions) => {
-    await printResult(
-      await request(options, `/bookmarks/search?q=${encodeURIComponent(query)}`),
-      options,
+    console.log(
+      JSON.stringify(
+        await request(options, `/bookmarks/search?q=${encodeURIComponent(query)}`),
+        null,
+        2,
+      ),
     )
   })
 
 cli
   .command('bookmarks:get <id>', 'Read one browser bookmark node by id')
   .action(async (id: string, options: GlobalOptions) => {
-    await printResult(await request(options, `/bookmarks/${encodeURIComponent(id)}`), options)
+    console.log(
+      JSON.stringify(await request(options, `/bookmarks/${encodeURIComponent(id)}`), null, 2),
+    )
   })
 
 cli
@@ -61,13 +66,16 @@ cli
         parentId: options.parentId === undefined ? undefined : String(options.parentId),
         index: options.index === undefined ? undefined : Number(options.index),
       }
-      await printResult(
-        await request(options, '/bookmarks', {
-          body: JSON.stringify(body),
-          headers: { 'content-type': 'application/json' },
-          method: 'POST',
-        }),
-        options,
+      console.log(
+        JSON.stringify(
+          await request(options, '/bookmarks', {
+            body: JSON.stringify(body),
+            headers: { 'content-type': 'application/json' },
+            method: 'POST',
+          }),
+          null,
+          2,
+        ),
       )
     },
   )
@@ -77,13 +85,16 @@ cli
   .option('--title <title>', 'New bookmark title')
   .option('--url <url>', 'New bookmark URL')
   .action(async (id: string, options: GlobalOptions & { title?: string; url?: string }) => {
-    await printResult(
-      await request(options, `/bookmarks/${encodeURIComponent(id)}`, {
-        body: JSON.stringify({ title: options.title, url: options.url }),
-        headers: { 'content-type': 'application/json' },
-        method: 'PATCH',
-      }),
-      options,
+    console.log(
+      JSON.stringify(
+        await request(options, `/bookmarks/${encodeURIComponent(id)}`, {
+          body: JSON.stringify({ title: options.title, url: options.url }),
+          headers: { 'content-type': 'application/json' },
+          method: 'PATCH',
+        }),
+        null,
+        2,
+      ),
     )
   })
 
@@ -96,31 +107,40 @@ cli
       parentId: options.parentId === undefined ? undefined : String(options.parentId),
       index: options.index === undefined ? undefined : Number(options.index),
     }
-    await printResult(
-      await request(options, `/bookmarks/${encodeURIComponent(id)}/move`, {
-        body: JSON.stringify(body),
-        headers: { 'content-type': 'application/json' },
-        method: 'POST',
-      }),
-      options,
+    console.log(
+      JSON.stringify(
+        await request(options, `/bookmarks/${encodeURIComponent(id)}/move`, {
+          body: JSON.stringify(body),
+          headers: { 'content-type': 'application/json' },
+          method: 'POST',
+        }),
+        null,
+        2,
+      ),
     )
   })
 
 cli
   .command('bookmarks:remove <id>', 'Remove a bookmark or empty folder')
   .action(async (id: string, options: GlobalOptions) => {
-    await printResult(
-      await request(options, `/bookmarks/${encodeURIComponent(id)}`, { method: 'DELETE' }),
-      options,
+    console.log(
+      JSON.stringify(
+        await request(options, `/bookmarks/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+        null,
+        2,
+      ),
     )
   })
 
 cli
   .command('bookmarks:remove-tree <id>', 'Recursively remove a bookmark folder tree')
   .action(async (id: string, options: GlobalOptions) => {
-    await printResult(
-      await request(options, `/bookmarks/${encodeURIComponent(id)}/tree`, { method: 'DELETE' }),
-      options,
+    console.log(
+      JSON.stringify(
+        await request(options, `/bookmarks/${encodeURIComponent(id)}/tree`, { method: 'DELETE' }),
+        null,
+        2,
+      ),
     )
   })
 
@@ -131,11 +151,7 @@ cli
     const days = Number(options.days ?? '90')
     const threshold = Date.now() - days * 24 * 60 * 60 * 1000
 
-    const result = await request(options, '/bookmarks/tree')
-    if (!isOkResult(result)) {
-      await printResult(result, options)
-      return
-    }
+    const tree = await request(options, '/bookmarks/tree')
 
     const items: Array<{
       title: string
@@ -167,7 +183,7 @@ cli
       }
     }
 
-    walk((result.result ?? []) as Array<Record<string, unknown>>, '')
+    walk(tree as Array<Record<string, unknown>>, '')
 
     const unused = items.filter((n) => !n.dateLastUsed || n.dateLastUsed < threshold)
     unused.sort((a, b) => {
@@ -177,7 +193,7 @@ cli
     })
 
     if (options.json) {
-      console.log(JSON.stringify({ ok: true, count: unused.length, items: unused }, null, 2))
+      console.log(JSON.stringify({ count: unused.length, items: unused }, null, 2))
       return
     }
 
@@ -213,7 +229,7 @@ cli
   })
 
 cli.command('daemon:stop', 'Stop the running bb daemon').action(async (options: GlobalOptions) => {
-  await printResult(await request(options, '/shutdown', { method: 'POST' }), options)
+  console.log(JSON.stringify(await request(options, '/shutdown', { method: 'POST' }), null, 2))
 })
 
 cli.help()
@@ -227,43 +243,19 @@ async function request(options: GlobalOptions, path: string, init?: RequestInit)
   )
   const url = `${baseUrl}${path}`
 
+  let response: Response
   try {
-    const response = await fetch(url, init)
-    return await response.json()
+    response = await fetch(url, init)
   } catch (error) {
-    return {
-      ok: false,
-      error: `Could not reach daemon at ${baseUrl}. Start it with "pnpm dev:daemon". ${errorMessage(error)}`,
-    }
-  }
-}
-
-async function printResult(result: unknown, options: GlobalOptions) {
-  if (options.json) {
-    console.log(JSON.stringify(result, null, 2))
-    if (!isOkResult(result)) {
-      process.exitCode = 1
-    }
-    return
+    throw new Error(
+      `Could not reach daemon at ${baseUrl}. Start it with "pnpm dev:daemon". ${errorMessage(error)}`,
+    )
   }
 
-  if (!isOkResult(result)) {
-    console.error(`Error: ${errorText(result)}`)
-    process.exitCode = 1
-    return
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(body || response.statusText)
   }
 
-  console.log(JSON.stringify(result.result ?? result, null, 2))
-}
-
-function isOkResult(value: unknown): value is { ok: true; result?: unknown } {
-  return Boolean(value && typeof value === 'object' && 'ok' in value && value.ok === true)
-}
-
-function errorText(value: unknown) {
-  if (value && typeof value === 'object' && 'error' in value) {
-    return String(value.error)
-  }
-
-  return 'Unexpected daemon response'
+  return response.json()
 }
