@@ -13,7 +13,13 @@ AI Agent -> CLI -> localhost daemon <-> browser extension -> bookmarks API
 - `packages/cli`: `cac` powered `bb` CLI for agents.
 - `packages/shared`: shared types and constants used across packages.
 
-## Download Web Extension
+## Skills
+
+```bash
+npx skills add kvoon3/bb
+```
+
+## Web Extension
 
 Download the latest extension package from [GitHub Releases](https://github.com/kvoon3/bb/releases).
 

@@ -1,3 +1,7 @@
+## Update Project Agent Skills
+
+When creating or updating agent skills for this project, follow the guidelines in [`docs/skills-generater.md`](docs/skills-generater.md).
+
 <!--VITE PLUS START-->
 
 # Using Vite+, the Unified Toolchain for the Web

@@ -4,6 +4,7 @@ description: Anthony Fu's opinionated tooling and conventions for JavaScript/Typ
 metadata:
   author: Anthony Fu
   version: "2026.05.01"
+  internal: true
 ---
 
 ## Coding Practices
