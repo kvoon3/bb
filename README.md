@@ -1,6 +1,13 @@
-# BB (Bookmarks Bridge)
+<h1 align="center">BB <sup style="font-size: 0.5em;">Bookmarks Bridge</sup></h1>
 
-AI-native browser bookmark access using a local bridge:
+<p align="center">
+  <a href="https://npmx.dev/package/@kvoon/bb-cli"><img src="https://img.shields.io/npm/v/@kvoon/bb-cli?style=flat&colorA=080f12&colorB=1fa669&logo=npm" alt="npm version"></a>
+  <a href="https://npmx.dev/package/@kvoon/bb-cli"><img src="https://img.shields.io/npm/dm/@kvoon/bb-cli?style=flat&colorA=080f12&colorB=1fa669&logo=npm" alt="npm downloads"></a>
+  <a href="https://github.com/kvoon3/bb/releases"><img src="https://img.shields.io/badge/Chrome%20Web%20Store-coming%20soon-1fa669?style=flat&logo=googlechrome&labelColor=080f12" alt="Chrome Web Store"></a>
+  <a href="https://github.com/kvoon3/bb/blob/main/LICENSE"><img src="https://img.shields.io/github/license/kvoon3/bb.svg?style=flat&colorA=080f12&colorB=1fa669&logo=github" alt="License"></a>
+</p>
+
+<p align="center">AI-native browser bookmark access using a local bridge.</p>
 
 ```text
 AI Agent -> CLI -> localhost daemon <-> browser extension -> bookmarks API
