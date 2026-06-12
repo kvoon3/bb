@@ -27,6 +27,8 @@ npm -g i @kvoon/bb-cli
 
 Run `bb -h` to see available commands:
 
+<!-- cli-help-start -->
+
 ```bash
 $ bb -h
 bb/0.1.0
@@ -69,3 +71,5 @@ Options:
   -h, --help     Display this message
   -v, --version  Display version number
 ```
+
+<!-- cli-help-end -->

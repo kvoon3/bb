@@ -8,6 +8,8 @@
     "dev:extension": "vp run extension#dev",
     "dev:daemon": "vp run @bb/daemon#dev",
     "bb": "vp run @kvoon/bb-cli#dev",
+    "update": "tsx scripts/update-docs.ts",
+    "prepare": "nr update",
     "up": "vpx taze -I major",
     "build": "pnpm -r build"
   },
