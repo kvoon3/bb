@@ -5,7 +5,7 @@ description: Bookmark management commands in the bb CLI.
 
 # Bookmark Commands
 
-All bookmark commands are grouped under the `bookmarks:` namespace.
+All bookmark commands are grouped under the `bookmarks:` namespace. They require the daemon and the browser extension to be running.
 
 ## Read Commands
 
@@ -37,22 +37,24 @@ bb bookmarks:remove <id>
 bb bookmarks:remove-tree <id>
 ```
 
-## Unused Bookmarks
+## Find Unused Bookmarks
 
 ```bash
-# List bookmarks not visited in the last 90 days (text output)
+# Text output, default 90 days
 bb bookmarks:unused
+
+# Custom threshold
 bb bookmarks:unused --days 30
 
-# Raw JSON output
+# Machine-readable output
 bb bookmarks:unused --json
 ```
 
 ## Key Points
 
 - `bookmarks:remove` only removes single bookmarks or empty folders; use `remove-tree` for folders with children.
-- `bookmarks:unused` performs client-side filtering against the full tree returned by the daemon.
 - The CLI URL-encodes IDs before sending them to the daemon.
+- A 503 response means the browser extension is not connected. Check the extension status before retrying.
 
 <!--
 Source references:

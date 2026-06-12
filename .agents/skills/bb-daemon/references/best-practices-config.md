@@ -18,14 +18,13 @@ Connection settings are resolved from environment variables first, then shared c
 ## Usage
 
 ```bash
-BB_DAEMON_PORT=8080 pnpm dev:daemon
+BB_DAEMON_PORT=8080 bb daemon
 ```
 
 ## Key Points
 
-- Defaults come from `@bb/shared` (`DEFAULT_DAEMON_HOST`, `DEFAULT_DAEMON_PORT`).
-- The CLI reads the same variables so it can connect to a non-default daemon.
 - Keep the daemon bound to localhost unless you have a specific reason to expose it.
+- The CLI reads the same variables so it can connect to a non-default daemon.
 
 <!--
 Source references:

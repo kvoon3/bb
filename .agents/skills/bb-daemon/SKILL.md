@@ -1,6 +1,6 @@
 ---
 name: bb-daemon
-description: Local HTTP/WebSocket daemon that bridges the bb CLI to a browser extension.
+description: Run the bb daemon directly for advanced or embedded use cases.
 metadata:
   author: Kevin Kwong
   version: "2026.6.12"
@@ -9,27 +9,12 @@ metadata:
 
 > The skill is based on `@bb/daemon` v0.0.0, generated at 2026-06-12.
 
-`@bb/daemon` is an h3-based server that exposes bookmark operations over HTTP and communicates with the browser extension over a WebSocket RPC channel.
+`@bb/daemon` is the localhost HTTP/WebSocket server that the `bb` CLI talks to. Most users do not need this skill; use the `bb-cli` skill instead. This skill is only useful when embedding or scripting the daemon directly.
 
 ## Core References
 
 | Topic | Description | Reference |
 |-------|-------------|-----------|
-| Starting the Daemon | `startDaemon` and the `DaemonInstance` lifecycle | [core-start-daemon](references/core-start-daemon.md) |
-| HTTP Routes | Route overview and extension-state checks | [core-routes](references/core-routes.md) |
+| Start Daemon | Start the daemon programmatically | [core-start-daemon](references/core-start-daemon.md) |
 | Configuration | Environment variables and defaults | [best-practices-config](references/best-practices-config.md) |
-
-## Features
-
-### Bookmarks
-
-| Topic | Description | Reference |
-|-------|-------------|-----------|
-| Bookmark API | Endpoints for reading, searching, and modifying bookmarks | [features-bookmarks-api](references/features-bookmarks-api.md) |
-| Unused Bookmarks | HTML report for stale bookmarks | [advanced-unused-bookmarks](references/advanced-unused-bookmarks.md) |
-
-### Extension
-
-| Topic | Description | Reference |
-|-------|-------------|-----------|
-| Extension RPC | WebSocket, birpc, and the extension connection | [features-extension-rpc](references/features-extension-rpc.md) |
+| Extension Connection | How the browser extension connects | [best-practices-extension-connection](references/best-practices-extension-connection.md) |

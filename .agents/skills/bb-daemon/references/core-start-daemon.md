@@ -1,11 +1,11 @@
 ---
 name: bb-daemon-start
-description: Start and stop the bb daemon programmatically or via CLI.
+description: Start the bb daemon programmatically.
 ---
 
-# Starting the Daemon
+# Start the Daemon Programmatically
 
-`startDaemon` boots the h3 HTTP server and the extension WebSocket server.
+Import `startDaemon` from `@bb/daemon` when you want to embed the server in your own script.
 
 ## Usage
 
@@ -20,23 +20,11 @@ console.log(instance.url)
 await instance.close()
 ```
 
-## DaemonInstance
-
-```ts
-export interface DaemonInstance {
-  server: Server
-  wsServer: WebSocketServer
-  url: string
-  close: () => Promise<void>
-}
-```
-
 ## Key Points
 
 - Options fall back to `DEFAULT_DAEMON_HOST` / `DEFAULT_DAEMON_PORT` from `@bb/shared`.
 - The returned `close()` shuts down the HTTP server and terminates all WebSocket clients.
-- The CLI command `bb daemon` starts the daemon in the foreground and handles `SIGINT`/`SIGTERM`.
-- Call `bb daemon:stop` or POST `/shutdown` to stop a running daemon.
+- For normal CLI usage, run `bb daemon` instead.
 
 <!--
 Source references:

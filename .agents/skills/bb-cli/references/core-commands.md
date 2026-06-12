@@ -17,28 +17,29 @@ bb --port <port>    # default: 31337
 bb --json           # print raw JSON responses
 ```
 
-## Installation
+## Command Overview
 
-The CLI is published as `@kvoon/bb-cli` and provides the `bb` binary:
+Use `bb -h` to show all commands
 
-```bash
-pnpm bb
-# or
-pnpm exec bb --help
-```
-
-## Help and Version
-
-```bash
-bb --help
-bb --version
-```
+| Command                         | Purpose                             |
+| ------------------------------- | ----------------------------------- |
+| `bb health`                     | Check daemon and extension status   |
+| `bb daemon`                     | Start the daemon in the foreground  |
+| `bb daemon:stop`                | Stop the running daemon             |
+| `bb bookmarks:tree`             | Read the full bookmark tree         |
+| `bb bookmarks:search <query>`   | Search bookmarks                    |
+| `bb bookmarks:get <id>`         | Get one bookmark by id              |
+| `bb bookmarks:create`           | Create a bookmark or folder         |
+| `bb bookmarks:update <id>`      | Update a bookmark                   |
+| `bb bookmarks:move <id>`        | Move a bookmark                     |
+| `bb bookmarks:remove <id>`      | Remove a bookmark or empty folder   |
+| `bb bookmarks:remove-tree <id>` | Recursively remove a folder         |
+| `bb bookmarks:unused`           | List bookmarks not visited recently |
 
 ## Key Points
 
-- The CLI talks to the daemon over HTTP; start the daemon first with `pnpm dev:daemon` or `bb daemon`.
-- `--json` bypasses formatted output and prints the raw daemon response.
-- If the daemon is unreachable, the CLI prompts you to start it with `pnpm dev:daemon`.
+- Use `--json` when piping output to other tools.
+- If bookmark commands fail with a 503 error, the browser extension is not connected. See the extension troubleshooting reference.
 
 <!--
 Source references:
