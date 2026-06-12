@@ -21,11 +21,7 @@ export function startDaemon(options?: { host?: string; port?: number }): DaemonI
 
   const server = createServer(async (request, response) => {
     try {
-      await routeHttp(request, response, () => {
-        close()
-          .then(() => process.exit(0))
-          .catch(() => process.exit(1))
-      })
+      await routeHttp(request, response, shutdown)
     } catch (error) {
       writeJson(response, 500, { ok: false, error: errorMessage(error) })
     }
@@ -61,6 +57,12 @@ export function startDaemon(options?: { host?: string; port?: number }): DaemonI
       wsServer.clients.forEach((client) => client.terminate())
       wsServer.close()
     })
+
+  function shutdown() {
+    close()
+      .then(() => process.exit(0))
+      .catch(() => process.exit(1))
+  }
 
   return { server, wsServer, url, close }
 }

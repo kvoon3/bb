@@ -2,8 +2,9 @@ import {
   DEFAULT_DAEMON_HOST,
   DEFAULT_DAEMON_PORT,
   daemonWebSocketUrl,
-  type ExtensionRequest,
+  type ExtensionRpc,
 } from '@bb/protocol'
+import { createBirpc } from 'birpc'
 
 const reconnectDelayMs = 1_500
 const daemonUrl = daemonWebSocketUrl(DEFAULT_DAEMON_PORT, DEFAULT_DAEMON_HOST)
@@ -22,43 +23,84 @@ function connect() {
 
   socket = new WebSocket(daemonUrl)
 
-  socket.addEventListener('open', () => {
+  socket.addEventListener('open', function () {
     void chrome.runtime.sendMessage({ type: 'offscreen:connected' })
   })
 
-  socket.addEventListener('message', async (event) => {
-    const requestData = String(event.data)
-    try {
-      const response = await chrome.runtime.sendMessage({
-        type: 'offscreen:request',
-        data: requestData,
-      })
-      socket?.send(JSON.stringify(response))
-    } catch {
-      let id: string
-      try {
-        id = (JSON.parse(requestData) as ExtensionRequest).id
-      } catch {
-        id = 'unknown'
-      }
-
-      socket?.send(
-        JSON.stringify({
-          id,
-          type: 'response',
-          ok: false,
-          error: 'Service worker is not available',
-        }),
-      )
-    }
-  })
-
-  socket.addEventListener('close', () => {
+  socket.addEventListener('close', function () {
     void chrome.runtime.sendMessage({ type: 'offscreen:disconnected' })
     setTimeout(connect, reconnectDelayMs)
   })
 
-  socket.addEventListener('error', () => {
+  socket.addEventListener('error', function () {
     socket?.close()
   })
+
+  const messageHandlers = new WeakMap<
+    (data: any, ...extras: any[]) => void,
+    (event: MessageEvent) => void
+  >()
+
+  createBirpc<Record<string, never>, ExtensionRpc>(
+    {
+      getTree() {
+        return callBackground('getTree')
+      },
+      search(query) {
+        return callBackground('search', query)
+      },
+      get(id) {
+        return callBackground('get', id)
+      },
+      getChildren(id) {
+        return callBackground('getChildren', id)
+      },
+      create(params) {
+        return callBackground('create', params)
+      },
+      update(id, changes) {
+        return callBackground('update', id, changes)
+      },
+      move(id, changes) {
+        return callBackground('move', id, changes)
+      },
+      remove(id) {
+        return callBackground('remove', id)
+      },
+      removeTree(id) {
+        return callBackground('removeTree', id)
+      },
+    },
+    {
+      post(data) {
+        socket?.send(data)
+      },
+      on(fn) {
+        const handler = (event: MessageEvent) => fn(event.data)
+        messageHandlers.set(fn, handler)
+        socket?.addEventListener('message', handler)
+      },
+      off(fn) {
+        const handler = messageHandlers.get(fn)
+        if (handler) socket?.removeEventListener('message', handler)
+      },
+      serialize: JSON.stringify,
+      deserialize(data) {
+        return JSON.parse(String(data))
+      },
+    },
+  )
+}
+
+async function callBackground<K extends keyof ExtensionRpc>(
+  method: K,
+  ...args: Parameters<ExtensionRpc[K]>
+): Promise<Awaited<ReturnType<ExtensionRpc[K]>>> {
+  const response = (await chrome.runtime.sendMessage({
+    type: 'offscreen:rpc',
+    method,
+    args,
+  })) as { result?: unknown; error?: string }
+  if (response.error) throw new Error(response.error)
+  return response.result as Awaited<ReturnType<ExtensionRpc[K]>>
 }

@@ -2,8 +2,8 @@ import {
   DEFAULT_DAEMON_HOST,
   DEFAULT_DAEMON_PORT,
   daemonWebSocketUrl,
-  type ExtensionRequest,
-  type ExtensionResponse,
+  type BookmarkNode,
+  type ExtensionRpc,
 } from '@bb/protocol'
 import { errorMessage } from '@bb/utils'
 
@@ -13,9 +13,11 @@ const daemonUrl = daemonWebSocketUrl(DEFAULT_DAEMON_PORT, DEFAULT_DAEMON_HOST)
 
 let offscreenConnected = false
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message?.type === 'offscreen:request') {
-    void handleOffscreenRequest(message.data).then(sendResponse)
+chrome.runtime.onMessage.addListener(function (message, _sender, sendResponse) {
+  if (message?.type === 'offscreen:rpc') {
+    void handleRpc(message.method, message.args)
+      .then((result) => sendResponse({ result }))
+      .catch((error) => sendResponse({ error: errorMessage(error) }))
     return true
   }
 
@@ -30,7 +32,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   }
 
   if (message?.type === 'status') {
-    void ensureOffscreenDocument().then(() => {
+    void ensureOffscreenDocument().then(function () {
       sendResponse({ connected: offscreenConnected, daemonUrl })
     })
     return true
@@ -65,82 +67,42 @@ async function hasOffscreenDocument(): Promise<boolean> {
   )
 }
 
-async function handleOffscreenRequest(data: unknown): Promise<ExtensionResponse> {
-  let request: ExtensionRequest | undefined
-  try {
-    const parsed = JSON.parse(String(data)) as ExtensionRequest
-    request = parsed.type === 'request' ? parsed : undefined
-  } catch {
-    request = undefined
-  }
+const rpcImpl: ExtensionRpc = {
+  async getTree() {
+    return chrome.bookmarks.getTree() as Promise<BookmarkNode[]>
+  },
+  async search(query) {
+    return chrome.bookmarks.search(query) as Promise<BookmarkNode[]>
+  },
+  async get(id) {
+    return chrome.bookmarks.get(id) as Promise<BookmarkNode[]>
+  },
+  async getChildren(id) {
+    return chrome.bookmarks.getChildren(id) as Promise<BookmarkNode[]>
+  },
+  async create(params) {
+    return chrome.bookmarks.create(params) as Promise<BookmarkNode>
+  },
+  async update(id, changes) {
+    return chrome.bookmarks.update(id, changes) as Promise<BookmarkNode>
+  },
+  async move(id, changes) {
+    return chrome.bookmarks.move(id, changes) as Promise<BookmarkNode>
+  },
+  async remove(id) {
+    await chrome.bookmarks.remove(id)
+  },
+  async removeTree(id) {
+    await chrome.bookmarks.removeTree(id)
+  },
+}
 
-  if (!request) {
-    return { id: 'unknown', type: 'response', ok: false, error: 'Invalid request' }
-  }
-
-  try {
-    switch (request.method) {
-      case 'bookmarks.tree':
-        return {
-          id: request.id,
-          type: 'response',
-          ok: true,
-          result: await chrome.bookmarks.getTree(),
-        }
-      case 'bookmarks.search':
-        return {
-          id: request.id,
-          type: 'response',
-          ok: true,
-          result: await chrome.bookmarks.search(request.params.query),
-        }
-      case 'bookmarks.get':
-        return {
-          id: request.id,
-          type: 'response',
-          ok: true,
-          result: await chrome.bookmarks.get(request.params.id),
-        }
-      case 'bookmarks.children':
-        return {
-          id: request.id,
-          type: 'response',
-          ok: true,
-          result: await chrome.bookmarks.getChildren(request.params.id),
-        }
-      case 'bookmarks.create':
-        return {
-          id: request.id,
-          type: 'response',
-          ok: true,
-          result: await chrome.bookmarks.create(request.params),
-        }
-      case 'bookmarks.update': {
-        const { id: updateId, ...updateChanges } = request.params
-        return {
-          id: request.id,
-          type: 'response',
-          ok: true,
-          result: await chrome.bookmarks.update(updateId, updateChanges),
-        }
-      }
-      case 'bookmarks.move': {
-        const { id: moveId, ...moveChanges } = request.params
-        return {
-          id: request.id,
-          type: 'response',
-          ok: true,
-          result: await chrome.bookmarks.move(moveId, moveChanges),
-        }
-      }
-      case 'bookmarks.remove':
-        await chrome.bookmarks.remove(request.params.id)
-        return { id: request.id, type: 'response', ok: true, result: undefined }
-      case 'bookmarks.removeTree':
-        await chrome.bookmarks.removeTree(request.params.id)
-        return { id: request.id, type: 'response', ok: true, result: undefined }
-    }
-  } catch (error) {
-    return { id: request.id, type: 'response', ok: false, error: errorMessage(error) }
-  }
+async function handleRpc<K extends keyof ExtensionRpc>(
+  method: K,
+  args: Parameters<ExtensionRpc[K]>,
+): Promise<ReturnType<ExtensionRpc[K]>> {
+  const fn = rpcImpl[method] as (
+    ...args: Parameters<ExtensionRpc[K]>
+  ) => ReturnType<ExtensionRpc[K]>
+  return fn(...args)
 }

@@ -14,6 +14,23 @@ export type BookmarkNode = {
   children?: BookmarkNode[]
 }
 
+export interface ExtensionRpc {
+  getTree(): Promise<BookmarkNode[]>
+  search(query: string): Promise<BookmarkNode[]>
+  get(id: string): Promise<BookmarkNode[]>
+  getChildren(id: string): Promise<BookmarkNode[]>
+  create(params: {
+    parentId?: string
+    title?: string
+    url?: string
+    index?: number
+  }): Promise<BookmarkNode>
+  update(id: string, changes: { title?: string; url?: string }): Promise<BookmarkNode>
+  move(id: string, changes: { parentId?: string; index?: number }): Promise<BookmarkNode>
+  remove(id: string): Promise<void>
+  removeTree(id: string): Promise<void>
+}
+
 export type BookmarkCommand =
   | {
       method: 'bookmarks.tree'
@@ -51,29 +68,6 @@ export type BookmarkCommand =
       method: 'bookmarks.removeTree'
       params: { id: string }
     }
-
-export type BookmarkMethod = BookmarkCommand['method']
-
-export type ExtensionRequest = BookmarkCommand & {
-  id: string
-  type: 'request'
-}
-
-export type ExtensionResponse =
-  | {
-      id: string
-      type: 'response'
-      ok: true
-      result: unknown
-    }
-  | {
-      id: string
-      type: 'response'
-      ok: false
-      error: string
-    }
-
-export type RpcRequest = BookmarkCommand
 
 export type RpcResponse =
   | {

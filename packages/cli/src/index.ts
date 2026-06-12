@@ -201,16 +201,13 @@ cli
       port: options.port ? Number(options.port) : undefined,
     })
 
-    process.on('SIGINT', async () => {
-      console.log('\nShutting down daemon...')
-      await instance.close()
-      process.exit(0)
-    })
+    function stop(message?: string) {
+      if (message) console.log(message)
+      void instance.close().then(() => process.exit(0))
+    }
 
-    process.on('SIGTERM', async () => {
-      await instance.close()
-      process.exit(0)
-    })
+    process.on('SIGINT', () => stop('\nShutting down daemon...'))
+    process.on('SIGTERM', () => stop())
   })
 
 cli.command('daemon:stop', 'Stop the running bb daemon').action(async (options: GlobalOptions) => {

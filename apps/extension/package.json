@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@bb/protocol": "workspace:*",
-    "@bb/utils": "workspace:*"
+    "@bb/utils": "workspace:*",
+    "birpc": "^4.0.0"
   },
   "devDependencies": {
     "@types/chrome": "^0.1.3",

@@ -1,15 +1,16 @@
-import { randomUUID } from 'node:crypto'
 import type { WebSocket } from 'ws'
+import { createBirpc, type BirpcReturn } from 'birpc'
 import {
   EXTENSION_WS_PATH,
   type BookmarkCommand,
-  type ExtensionRequest,
+  type ExtensionRpc,
   type RpcResponse,
 } from '@bb/protocol'
+import { errorMessage } from '@bb/utils'
 import { host, port, requestTimeoutMs } from './config.js'
-import { parseExtensionResponse } from './utils.js'
 
 let extensionSocket: WebSocket | undefined
+let extensionRpc: BirpcReturn<ExtensionRpc> | undefined
 let extensionOrigin: string | undefined
 
 export function getExtensionState() {
@@ -28,57 +29,71 @@ export function handleWebSocketConnection(
   request: { headers: { origin?: string } },
 ) {
   extensionSocket?.close(1012, 'Replaced by a newer extension connection')
+  extensionRpc?.$close()
+
   extensionSocket = webSocket
   extensionOrigin = request.headers.origin
+  extensionRpc = createBirpc<ExtensionRpc, Record<string, never>>(
+    {},
+    {
+      post(data) {
+        webSocket.send(data)
+      },
+      on(fn) {
+        webSocket.on('message', fn)
+      },
+      off(fn) {
+        webSocket.off('message', fn)
+      },
+      serialize: JSON.stringify,
+      deserialize(data) {
+        return JSON.parse(String(data))
+      },
+      timeout: requestTimeoutMs,
+    },
+  )
 
-  webSocket.on('close', () => {
+  webSocket.on('close', function () {
     if (extensionSocket === webSocket) {
       extensionSocket = undefined
+      extensionRpc = undefined
       extensionOrigin = undefined
     }
   })
 }
 
+const commandHandlers: {
+  [K in BookmarkCommand['method']]: (
+    rpc: BirpcReturn<ExtensionRpc>,
+    command: Extract<BookmarkCommand, { method: K }>,
+  ) => Promise<unknown>
+} = {
+  'bookmarks.tree': (rpc) => rpc.getTree(),
+  'bookmarks.search': (rpc, command) => rpc.search(command.params.query),
+  'bookmarks.get': (rpc, command) => rpc.get(command.params.id),
+  'bookmarks.children': (rpc, command) => rpc.getChildren(command.params.id),
+  'bookmarks.create': (rpc, command) => rpc.create(command.params),
+  'bookmarks.update': (rpc, command) => {
+    const { id, ...changes } = command.params
+    return rpc.update(id, changes)
+  },
+  'bookmarks.move': (rpc, command) => {
+    const { id, ...changes } = command.params
+    return rpc.move(id, changes)
+  },
+  'bookmarks.remove': (rpc, command) => rpc.remove(command.params.id),
+  'bookmarks.removeTree': (rpc, command) => rpc.removeTree(command.params.id),
+}
+
 export async function sendToExtension(command: BookmarkCommand): Promise<RpcResponse> {
-  if (!extensionSocket || extensionSocket.readyState !== extensionSocket.OPEN) {
+  if (!extensionRpc || !extensionSocket || extensionSocket.readyState !== extensionSocket.OPEN) {
     return { ok: false, error: 'Browser extension is not connected' }
   }
 
-  const socket = extensionSocket
-  const id = randomUUID()
-  const message: ExtensionRequest = { id, type: 'request', ...command }
-
-  return await new Promise<RpcResponse>((resolve) => {
-    const timeout = setTimeout(() => {
-      cleanup()
-      resolve({ ok: false, error: 'Timed out waiting for browser extension' })
-    }, requestTimeoutMs)
-
-    const handleMessage = (data: WebSocket.RawData) => {
-      const response = parseExtensionResponse(data)
-      if (!response || response.id !== id) {
-        return
-      }
-
-      cleanup()
-      resolve(
-        response.ok ? { ok: true, result: response.result } : { ok: false, error: response.error },
-      )
-    }
-
-    const handleClose = () => {
-      cleanup()
-      resolve({ ok: false, error: 'Browser extension disconnected' })
-    }
-
-    const cleanup = () => {
-      clearTimeout(timeout)
-      socket.off('message', handleMessage)
-      socket.off('close', handleClose)
-    }
-
-    socket.on('message', handleMessage)
-    socket.on('close', handleClose)
-    socket.send(JSON.stringify(message))
-  })
+  try {
+    const result = await commandHandlers[command.method](extensionRpc, command as never)
+    return { ok: true, result }
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) }
+  }
 }
