@@ -25,13 +25,9 @@ A healthy setup reports:
 
 If `extensionConnected` is `false`, the extension is not connected.
 
-## Install the Extension
+## Install or Reinstall the Extension
 
-1. Download the latest extension package from [GitHub Releases](https://github.com/kvoon3/bb/releases).
-2. Unzip it.
-3. Open Chrome/Chromium and go to `chrome://extensions/`.
-4. Enable **Developer mode**.
-5. Click **Load unpacked** and select the unzipped extension folder.
+Follow the [Install the Browser Extension](core-install-extension.md) reference to download the latest `extension-X.X.X.zip` from GitHub Releases and load it manually in Chrome, Chromium, or Edge.
 
 ## Common Fixes
 

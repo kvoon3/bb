@@ -17,7 +17,7 @@ The daemon accepts one WebSocket connection from the browser extension and forwa
 
 - Only one extension connection is kept alive at a time.
 - If no extension is connected, bookmark endpoints return `503 Browser extension is not connected`.
-- The extension must be installed and enabled in the browser. See the `bb-cli` extension troubleshooting reference for installation steps.
+- The extension must be installed and enabled in the browser. See the `bb-cli` [Install the Browser Extension](../bb-cli/references/core-install-extension.md) reference for manual installation steps.
 
 <!--
 Source references:

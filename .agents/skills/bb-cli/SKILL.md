@@ -9,13 +9,14 @@ metadata:
 
 > The skill is based on `@kvoon/bb-cli` v0.1.1, generated at 2026-06-12.
 
-`bb` is the command-line interface for the BB Bookmarks Bridge. It installs from npm, talks to a local daemon, and lets agents read and manage browser bookmarks. The browser extension must be installed and connected for bookmark commands to work.
+`bb` is the command-line interface for the BB Bookmarks Bridge. It installs from npm, talks to a local daemon, and lets agents read and manage browser bookmarks. The browser extension must be installed and connected for bookmark commands to work; the agent can guide you through installation but will not install it for you.
 
 ## Core References
 
 | Topic | Description | Reference |
 |-------|-------------|-----------|
 | Install CLI | Install `bb` from npm | [core-install](references/core-install.md) |
+| Install Web Extension | Download the extension from GitHub Releases and load it manually | [core-install-extension](references/core-install-extension.md) |
 | Start Daemon | Start the daemon in the foreground or as a background task | [core-start-daemon](references/core-start-daemon.md) |
 | Commands | Global options and command overview | [core-commands](references/core-commands.md) |
 
