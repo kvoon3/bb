@@ -1,6 +1,44 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { getExtensionState, sendToExtension } from './extension.js'
+import type { WebSocket } from 'ws'
+import { createBirpc, type BirpcReturn } from 'birpc'
+import { EXTENSION_WS_PATH, type ExtensionRpc, type RpcResponse } from '@bb/protocol'
+import { errorMessage } from '@bb/utils'
+import { host, port, requestTimeoutMs } from './config.js'
 import { readJson, writeHtml, writeJson } from './utils.js'
+
+let extensionSocket: WebSocket | undefined
+let extensionRpc: BirpcReturn<ExtensionRpc> | undefined
+let extensionOrigin: string | undefined
+
+export function handleWebSocketConnection(
+  ws: WebSocket,
+  request: { headers: { origin?: string } },
+) {
+  extensionSocket?.close(1012, 'Replaced by a newer extension connection')
+  extensionRpc?.$close()
+
+  extensionSocket = ws
+  extensionOrigin = request.headers.origin
+  extensionRpc = createBirpc<ExtensionRpc, Record<string, never>>(
+    {},
+    {
+      post: (data) => ws.send(data),
+      on: (fn) => ws.on('message', fn),
+      off: (fn) => ws.off('message', fn),
+      serialize: JSON.stringify,
+      deserialize: JSON.parse,
+      timeout: requestTimeoutMs,
+    },
+  )
+
+  ws.on('close', function () {
+    if (extensionSocket === ws) {
+      extensionSocket = undefined
+      extensionRpc = undefined
+      extensionOrigin = undefined
+    }
+  })
+}
 
 export async function routeHttp(
   request: IncomingMessage,
@@ -26,30 +64,32 @@ export async function routeHttp(
     return
   }
 
+  const rpc = extensionRpc
+  if (!rpc || !extensionSocket || extensionSocket.readyState !== extensionSocket.OPEN) {
+    writeJson(response, 200, { ok: false, error: 'Browser extension is not connected' })
+    return
+  }
+
   if (request.method === 'GET' && url.pathname === '/bookmarks/tree') {
-    writeJson(response, 200, await sendToExtension({ method: 'bookmarks.tree' }))
+    writeJson(response, 200, await tryRpc(() => rpc.getTree()))
     return
   }
 
   if (request.method === 'GET' && url.pathname === '/bookmarks/search') {
     const query = url.searchParams.get('q') ?? ''
-    writeJson(
-      response,
-      200,
-      await sendToExtension({ method: 'bookmarks.search', params: { query } }),
-    )
+    writeJson(response, 200, await tryRpc(() => rpc.search(query)))
     return
   }
 
   if (request.method === 'POST' && url.pathname === '/bookmarks') {
     const body = await readJson(request)
-    writeJson(response, 200, await sendToExtension({ method: 'bookmarks.create', params: body }))
+    writeJson(response, 200, await tryRpc(() => rpc.create(body)))
     return
   }
 
   if (request.method === 'GET' && url.pathname === '/bookmarks/unused') {
     const days = Number(url.searchParams.get('days') ?? '90')
-    const result = await sendToExtension({ method: 'bookmarks.tree' })
+    const result = await tryRpc(() => rpc.getTree())
     if (!result.ok) {
       writeJson(response, 200, result)
       return
@@ -62,7 +102,7 @@ export async function routeHttp(
 
   if (request.method === 'GET' && bookmarkIdMatch) {
     const id = decodeURIComponent(bookmarkIdMatch[1])
-    writeJson(response, 200, await sendToExtension({ method: 'bookmarks.get', params: { id } }))
+    writeJson(response, 200, await tryRpc(() => rpc.get(id)))
     return
   }
 
@@ -70,17 +110,13 @@ export async function routeHttp(
     const id = decodeURIComponent(bookmarkIdMatch[1])
     const body = await readJson(request)
     const { id: _ignored, ...changes } = body as { id?: unknown; title?: string; url?: string }
-    writeJson(
-      response,
-      200,
-      await sendToExtension({ method: 'bookmarks.update', params: { id, ...changes } }),
-    )
+    writeJson(response, 200, await tryRpc(() => rpc.update(id, changes)))
     return
   }
 
   if (request.method === 'DELETE' && bookmarkIdMatch) {
     const id = decodeURIComponent(bookmarkIdMatch[1])
-    writeJson(response, 200, await sendToExtension({ method: 'bookmarks.remove', params: { id } }))
+    writeJson(response, 200, await tryRpc(() => rpc.remove(id)))
     return
   }
 
@@ -89,32 +125,26 @@ export async function routeHttp(
     const id = decodeURIComponent(moveMatch[1])
     const body = await readJson(request)
     const { id: _ignored, ...changes } = body as { id?: unknown; parentId?: string; index?: number }
-    writeJson(
-      response,
-      200,
-      await sendToExtension({ method: 'bookmarks.move', params: { id, ...changes } }),
-    )
+    writeJson(response, 200, await tryRpc(() => rpc.move(id, changes)))
     return
   }
 
   const treeMatch = url.pathname.match(/^\/bookmarks\/([^/]+)\/tree$/)
   if (request.method === 'DELETE' && treeMatch) {
     const id = decodeURIComponent(treeMatch[1])
-    writeJson(
-      response,
-      200,
-      await sendToExtension({ method: 'bookmarks.removeTree', params: { id } }),
-    )
-    return
-  }
-
-  if (request.method === 'POST' && url.pathname === '/rpc') {
-    const body = await readJson(request)
-    writeJson(response, 200, await sendToExtension(body))
+    writeJson(response, 200, await tryRpc(() => rpc.removeTree(id)))
     return
   }
 
   writeJson(response, 404, { ok: false, error: 'Not found' })
+}
+
+async function tryRpc<T>(fn: () => Promise<T>): Promise<RpcResponse> {
+  try {
+    return { ok: true, result: await fn() }
+  } catch (error) {
+    return { ok: false, error: errorMessage(error) }
+  }
 }
 
 function renderUnusedHtml(nodes: unknown[], days: number): string {
@@ -214,4 +244,15 @@ function escapeHtml(text: string): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+}
+
+export function getExtensionState() {
+  return {
+    connected: extensionSocket !== undefined && extensionSocket.readyState === extensionSocket.OPEN,
+    origin: extensionOrigin,
+  }
+}
+
+export function isWebSocketPath(url: string): boolean {
+  return new URL(url, `http://${host}:${port}`).pathname === EXTENSION_WS_PATH
 }

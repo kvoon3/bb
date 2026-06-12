@@ -1,6 +1,5 @@
 {
   "name": "bb",
-  "version": "0.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,8 +9,8 @@
     "dev:daemon": "vp run @bb/daemon#dev",
     "bb": "node packages/cli/dist/index.mjs",
     "bb:dev": "pnpm --silent --filter @kvoon/bb-cli exec tsx src/index.ts",
-    "release": "vpx bumpp",
-    "up": "vpx taze -I major"
+    "up": "vpx taze -I major",
+    "build": "pnpm -r build"
   },
   "devDependencies": {
     "vite-plus": "catalog:"

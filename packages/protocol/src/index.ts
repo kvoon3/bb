@@ -31,44 +31,6 @@ export interface ExtensionRpc {
   removeTree(id: string): Promise<void>
 }
 
-export type BookmarkCommand =
-  | {
-      method: 'bookmarks.tree'
-      params?: Record<string, never>
-    }
-  | {
-      method: 'bookmarks.search'
-      params: { query: string }
-    }
-  | {
-      method: 'bookmarks.get'
-      params: { id: string }
-    }
-  | {
-      method: 'bookmarks.children'
-      params: { id: string }
-    }
-  | {
-      method: 'bookmarks.create'
-      params: { parentId?: string; title?: string; url?: string; index?: number }
-    }
-  | {
-      method: 'bookmarks.update'
-      params: { id: string; title?: string; url?: string }
-    }
-  | {
-      method: 'bookmarks.move'
-      params: { id: string; parentId?: string; index?: number }
-    }
-  | {
-      method: 'bookmarks.remove'
-      params: { id: string }
-    }
-  | {
-      method: 'bookmarks.removeTree'
-      params: { id: string }
-    }
-
 export type RpcResponse =
   | {
       ok: true

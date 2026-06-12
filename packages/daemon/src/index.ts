@@ -1,10 +1,10 @@
 import { createServer } from 'node:http'
 import type { Server } from 'node:http'
 import { WebSocketServer } from 'ws'
+import { EXTENSION_WS_PATH } from '@bb/protocol'
 import { errorMessage } from '@bb/utils'
-import { host, port } from './config.js'
-import { handleWebSocketConnection, isWebSocketPath } from './extension.js'
-import { routeHttp } from './routes.js'
+import { host as defaultHost, port as defaultPort } from './config.js'
+import { handleWebSocketConnection, routeHttp } from './routes.js'
 import { writeJson } from './utils.js'
 
 export interface DaemonInstance {
@@ -15,8 +15,8 @@ export interface DaemonInstance {
 }
 
 export function startDaemon(options?: { host?: string; port?: number }): DaemonInstance {
-  const h = options?.host ?? host
-  const p = options?.port ?? port
+  const h = options?.host ?? defaultHost
+  const p = options?.port ?? defaultPort
   const url = `http://${h}:${p}`
 
   const server = createServer(async (request, response) => {
@@ -30,7 +30,7 @@ export function startDaemon(options?: { host?: string; port?: number }): DaemonI
   const wsServer = new WebSocketServer({ noServer: true })
 
   server.on('upgrade', (request, socket, head) => {
-    if (!isWebSocketPath(request.url ?? '/')) {
+    if (new URL(request.url ?? '/', url).pathname !== EXTENSION_WS_PATH) {
       socket.destroy()
       return
     }

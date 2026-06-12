@@ -1,12 +1,7 @@
 #!/usr/bin/env node
 import { cac } from 'cac'
 import { startDaemon } from '@bb/daemon'
-import {
-  DEFAULT_DAEMON_HOST,
-  DEFAULT_DAEMON_PORT,
-  daemonBaseUrl,
-  type BookmarkCommand,
-} from '@bb/protocol'
+import { DEFAULT_DAEMON_HOST, DEFAULT_DAEMON_PORT, daemonBaseUrl } from '@bb/protocol'
 import { errorMessage } from '@bb/utils'
 import packageJson from '../package.json' with { type: 'json' }
 
@@ -32,14 +27,14 @@ cli
 cli
   .command('bookmarks:tree', 'Read the complete browser bookmark tree')
   .action(async (options: GlobalOptions) => {
-    await printResult(await rpc(options, { method: 'bookmarks.tree' }), options)
+    await printResult(await request(options, '/bookmarks/tree'), options)
   })
 
 cli
   .command('bookmarks:search <query>', 'Search browser bookmarks')
   .action(async (query: string, options: GlobalOptions) => {
     await printResult(
-      await rpc(options, { method: 'bookmarks.search', params: { query } }),
+      await request(options, `/bookmarks/search?q=${encodeURIComponent(query)}`),
       options,
     )
   })
@@ -47,7 +42,7 @@ cli
 cli
   .command('bookmarks:get <id>', 'Read one browser bookmark node by id')
   .action(async (id: string, options: GlobalOptions) => {
-    await printResult(await rpc(options, { method: 'bookmarks.get', params: { id } }), options)
+    await printResult(await request(options, `/bookmarks/${encodeURIComponent(id)}`), options)
   })
 
 cli
@@ -60,15 +55,17 @@ cli
     async (
       options: GlobalOptions & { title?: string; url?: string; parentId?: string; index?: string },
     ) => {
+      const body = {
+        title: options.title,
+        url: options.url,
+        parentId: options.parentId === undefined ? undefined : String(options.parentId),
+        index: options.index === undefined ? undefined : Number(options.index),
+      }
       await printResult(
-        await rpc(options, {
-          method: 'bookmarks.create',
-          params: {
-            title: options.title,
-            url: options.url,
-            parentId: options.parentId === undefined ? undefined : String(options.parentId),
-            index: options.index === undefined ? undefined : Number(options.index),
-          },
+        await request(options, '/bookmarks', {
+          body: JSON.stringify(body),
+          headers: { 'content-type': 'application/json' },
+          method: 'POST',
         }),
         options,
       )
@@ -81,9 +78,10 @@ cli
   .option('--url <url>', 'New bookmark URL')
   .action(async (id: string, options: GlobalOptions & { title?: string; url?: string }) => {
     await printResult(
-      await rpc(options, {
-        method: 'bookmarks.update',
-        params: { id, title: options.title, url: options.url },
+      await request(options, `/bookmarks/${encodeURIComponent(id)}`, {
+        body: JSON.stringify({ title: options.title, url: options.url }),
+        headers: { 'content-type': 'application/json' },
+        method: 'PATCH',
       }),
       options,
     )
@@ -94,14 +92,15 @@ cli
   .option('--parent-id <parentId>', 'New parent folder id')
   .option('--index <index>', 'New position index')
   .action(async (id: string, options: GlobalOptions & { parentId?: string; index?: string }) => {
+    const body = {
+      parentId: options.parentId === undefined ? undefined : String(options.parentId),
+      index: options.index === undefined ? undefined : Number(options.index),
+    }
     await printResult(
-      await rpc(options, {
-        method: 'bookmarks.move',
-        params: {
-          id,
-          parentId: options.parentId === undefined ? undefined : String(options.parentId),
-          index: options.index === undefined ? undefined : Number(options.index),
-        },
+      await request(options, `/bookmarks/${encodeURIComponent(id)}/move`, {
+        body: JSON.stringify(body),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
       }),
       options,
     )
@@ -110,14 +109,17 @@ cli
 cli
   .command('bookmarks:remove <id>', 'Remove a bookmark or empty folder')
   .action(async (id: string, options: GlobalOptions) => {
-    await printResult(await rpc(options, { method: 'bookmarks.remove', params: { id } }), options)
+    await printResult(
+      await request(options, `/bookmarks/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+      options,
+    )
   })
 
 cli
   .command('bookmarks:remove-tree <id>', 'Recursively remove a bookmark folder tree')
   .action(async (id: string, options: GlobalOptions) => {
     await printResult(
-      await rpc(options, { method: 'bookmarks.removeTree', params: { id } }),
+      await request(options, `/bookmarks/${encodeURIComponent(id)}/tree`, { method: 'DELETE' }),
       options,
     )
   })
@@ -129,7 +131,7 @@ cli
     const days = Number(options.days ?? '90')
     const threshold = Date.now() - days * 24 * 60 * 60 * 1000
 
-    const result = await rpc(options, { method: 'bookmarks.tree' })
+    const result = await request(options, '/bookmarks/tree')
     if (!isOkResult(result)) {
       await printResult(result, options)
       return
@@ -217,14 +219,6 @@ cli.command('daemon:stop', 'Stop the running bb daemon').action(async (options: 
 cli.help()
 cli.version(packageJson.version)
 cli.parse(process.argv[2] === '--' ? process.argv.toSpliced(2, 1) : process.argv)
-
-async function rpc(options: GlobalOptions, body: BookmarkCommand) {
-  return await request(options, '/rpc', {
-    body: JSON.stringify(body),
-    headers: { 'content-type': 'application/json' },
-    method: 'POST',
-  })
-}
 
 async function request(options: GlobalOptions, path: string, init?: RequestInit) {
   const baseUrl = daemonBaseUrl(

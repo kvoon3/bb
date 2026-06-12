@@ -2,9 +2,10 @@ import { defineConfig } from 'vite-plus'
 
 export default defineConfig({
   pack: {
-    dts: true,
     deps: {
       alwaysBundle: [/@bb\//],
     },
+    dts: false,
+    sourcemap: false,
   },
 })
