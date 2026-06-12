@@ -1,3 +1,10 @@
+## Packages
+
+- `apps/extension`: Chrome/Chromium MV3 extension built with the Vite+ workspace.
+- `packages/daemon`: localhost HTTP + WebSocket daemon.
+- `packages/cli`: `cac` powered `bb` CLI for agents.
+- `packages/shared`: shared types and constants used across packages.
+
 ## Update Project Agent Skills
 
 When creating or updating agent skills for this project, follow the guidelines in [`docs/skills-generater.md`](docs/skills-generater.md).
