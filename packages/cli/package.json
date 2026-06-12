@@ -23,7 +23,9 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.mjs",
     "check": "vp check",
-    "prepublishOnly": "vp run build"
+    "prepublishOnly": "vp run build",
+    "publish": "pnpm public",
+    "bump": "bumpp"
   },
   "dependencies": {
     "cac": "^6.7.14"
