@@ -1,4 +1,4 @@
-# BB Bookmarks Bridge
+# BB (Bookmarks Bridge)
 
 AI-native browser bookmark access using a local bridge:
 
