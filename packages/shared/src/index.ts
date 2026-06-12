@@ -31,20 +31,6 @@ export interface ExtensionRpc {
   removeTree(id: string): Promise<void>
 }
 
-export type RpcResponse =
-  | {
-      ok: true
-      result: unknown
-    }
-  | {
-      ok: false
-      error: string
-    }
-
-export function daemonBaseUrl(port = DEFAULT_DAEMON_PORT, host = DEFAULT_DAEMON_HOST) {
-  return `http://${host}:${port}`
-}
-
-export function daemonWebSocketUrl(port = DEFAULT_DAEMON_PORT, host = DEFAULT_DAEMON_HOST) {
-  return `ws://${host}:${port}${EXTENSION_WS_PATH}`
+export function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
 }

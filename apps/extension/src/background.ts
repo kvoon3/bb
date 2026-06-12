@@ -1,11 +1,11 @@
 import {
   DEFAULT_DAEMON_HOST,
   DEFAULT_DAEMON_PORT,
-  daemonWebSocketUrl,
   type BookmarkNode,
   type ExtensionRpc,
-} from '@bb/protocol'
-import { errorMessage } from '@bb/utils'
+} from '@bb/shared'
+import { daemonWebSocketUrl } from './url.js'
+import { errorMessage } from '@bb/shared'
 
 const offscreenPath = 'offscreen.html'
 const offscreenUrl = chrome.runtime.getURL(offscreenPath)

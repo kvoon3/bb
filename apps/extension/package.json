@@ -9,8 +9,7 @@
     "preview": "vp preview"
   },
   "dependencies": {
-    "@bb/protocol": "workspace:*",
-    "@bb/utils": "workspace:*",
+    "@bb/shared": "workspace:*",
     "birpc": "^4.0.0"
   },
   "devDependencies": {

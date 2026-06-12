@@ -1,4 +1,4 @@
-import { DEFAULT_DAEMON_HOST, DEFAULT_DAEMON_PORT } from '@bb/protocol'
+import { DEFAULT_DAEMON_HOST, DEFAULT_DAEMON_PORT } from '@bb/shared'
 
 export const port = Number(process.env.BB_DAEMON_PORT ?? DEFAULT_DAEMON_PORT)
 export const host = process.env.BB_DAEMON_HOST ?? DEFAULT_DAEMON_HOST

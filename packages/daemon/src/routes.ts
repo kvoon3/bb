@@ -10,7 +10,7 @@ import {
 } from 'h3'
 import type { WebSocket } from 'ws'
 import { createBirpc, type BirpcReturn } from 'birpc'
-import { EXTENSION_WS_PATH, type ExtensionRpc } from '@bb/protocol'
+import { EXTENSION_WS_PATH, type ExtensionRpc } from '@bb/shared'
 import { host, port, requestTimeoutMs } from './config.js'
 
 let extensionSocket: WebSocket | undefined

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 import { cac } from 'cac'
 import { startDaemon } from '@bb/daemon'
-import { DEFAULT_DAEMON_HOST, DEFAULT_DAEMON_PORT, daemonBaseUrl } from '@bb/protocol'
-import { errorMessage } from '@bb/utils'
+import { DEFAULT_DAEMON_HOST, DEFAULT_DAEMON_PORT } from '@bb/shared'
+import { daemonBaseUrl } from './url.js'
+import { errorMessage } from '@bb/shared'
 import packageJson from '../package.json' with { type: 'json' }
 
 const cli = cac('bb')

@@ -10,7 +10,7 @@ import {
   toNodeListener,
 } from 'h3'
 import { WebSocketServer } from 'ws'
-import { EXTENSION_WS_PATH } from '@bb/protocol'
+import { EXTENSION_WS_PATH } from '@bb/shared'
 import { host as defaultHost, port as defaultPort } from './config.js'
 import { createAppRouter, handleWebSocketConnection } from './routes.js'
 

@@ -30,8 +30,7 @@
   },
   "devDependencies": {
     "@bb/daemon": "workspace:*",
-    "@bb/protocol": "workspace:*",
-    "@bb/utils": "workspace:*",
+    "@bb/shared": "workspace:*",
     "@types/node": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
