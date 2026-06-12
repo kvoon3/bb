@@ -79,3 +79,7 @@ Options:
 ```
 
 <!-- cli-help-end -->
+
+## License
+
+[MIT](LICENSE) © Kevin Kwong
