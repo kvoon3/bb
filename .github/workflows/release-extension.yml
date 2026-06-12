@@ -1,4 +1,4 @@
-name: Release
+name: Release Extension
 
 permissions:
   contents: write
@@ -6,7 +6,7 @@ permissions:
 on:
   push:
     tags:
-      - 'v*'
+      - 'extension-v*'
 
 jobs:
   release:
@@ -30,14 +30,18 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Build shared package
+        run: pnpm --filter @bb/shared build
+
       - name: Build extension
         run: pnpm -C apps/extension build
 
       - name: Package extension
         working-directory: apps/extension
-        run: zip -r extension-${{ github.ref_name }}.zip dist
+        run: zip -r "extension-$(node -p 'require("./package.json").version').zip" dist
 
       - name: Generate changelog and release
-        run: npx changelogithub --assets 'apps/extension/extension-*.zip'
+        working-directory: apps/extension
+        run: npx changelogithub --to ${{ github.ref_name }} --assets 'extension-*.zip'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

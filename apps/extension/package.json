@@ -7,7 +7,7 @@
     "dev": "vp build --watch",
     "build": "tsc && vp build",
     "preview": "vp preview",
-    "release": "bumpp"
+    "release": "bumpp --tag \"extension-v%s\" --execute \"vp build\""
   },
   "dependencies": {
     "@bb/shared": "workspace:*",
