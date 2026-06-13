@@ -37,7 +37,7 @@ Run `bb -h` to see available commands:
 
 ```bash
 $ bb -h
-bb/0.1.0
+bb/0.1.1
 
 Usage:
   $ bb <command> [options]

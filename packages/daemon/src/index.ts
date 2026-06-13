@@ -1,5 +1,7 @@
 import { createServer } from 'node:http'
 import type { Server } from 'node:http'
+
+import { EXTENSION_WS_PATH } from '@bb/shared'
 import {
   createApp,
   createError,
@@ -10,7 +12,7 @@ import {
   toNodeListener,
 } from 'h3'
 import { WebSocketServer } from 'ws'
-import { EXTENSION_WS_PATH } from '@bb/shared'
+
 import { host as defaultHost, port as defaultPort } from './config.js'
 import { createAppRouter, handleWebSocketConnection } from './routes.js'
 

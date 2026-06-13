@@ -15,6 +15,7 @@ export default defineConfig({
     singleQuote: true,
     semi: false,
     ignorePatterns: ['.agents/**'],
+    sortImports: true,
   },
   staged: {
     '*.{ts,mjs,cjs,js,json,css,yaml,yml,md}': 'vp check --fix',

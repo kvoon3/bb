@@ -4,8 +4,9 @@ import {
   type BookmarkNode,
   type ExtensionRpc,
 } from '@bb/shared'
-import { daemonWebSocketUrl } from './url.js'
 import { errorMessage } from '@bb/shared'
+
+import { daemonWebSocketUrl } from './url.js'
 
 const offscreenPath = 'offscreen.html'
 const offscreenUrl = chrome.runtime.getURL(offscreenPath)

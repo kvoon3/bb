@@ -1,6 +1,7 @@
 import { DEFAULT_DAEMON_HOST, DEFAULT_DAEMON_PORT, type ExtensionRpc } from '@bb/shared'
-import { daemonWebSocketUrl } from './url.js'
 import { createBirpc } from 'birpc'
+
+import { daemonWebSocketUrl } from './url.js'
 
 const reconnectDelayMs = 1_500
 const daemonUrl = daemonWebSocketUrl(DEFAULT_DAEMON_PORT, DEFAULT_DAEMON_HOST)
