@@ -61,11 +61,17 @@ function connect() {
       move(id, changes) {
         return callBackground('move', id, changes)
       },
+      moveByPath(id, path, index) {
+        return callBackground('moveByPath', id, path, index)
+      },
       remove(id) {
         return callBackground('remove', id)
       },
       removeTree(id) {
         return callBackground('removeTree', id)
+      },
+      removeByPath(path) {
+        return callBackground('removeByPath', path)
       },
     },
     {

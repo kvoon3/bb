@@ -41,6 +41,7 @@ Follow the [Install the Browser Extension](core-install-extension.md) reference 
 - The extension connects to the daemon over WebSocket at `/extension`.
 - Only one browser extension connection is kept alive at a time.
 - Without the extension, daemon health still works, but bookmark commands return 503.
+- Path-based operations (`--path`) are resolved in the extension, so they also require a connected extension.
 
 <!--
 Source references:

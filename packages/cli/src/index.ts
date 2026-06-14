@@ -1,7 +1,8 @@
 #!/usr/bin/env node
+import { readFile } from 'node:fs/promises'
+
 import { startDaemon } from '@bb/daemon'
-import { DEFAULT_DAEMON_HOST, DEFAULT_DAEMON_PORT } from '@bb/shared'
-import { errorMessage } from '@bb/shared'
+import { DEFAULT_DAEMON_HOST, DEFAULT_DAEMON_PORT, errorMessage } from '@bb/shared'
 import { cac } from 'cac'
 
 import packageJson from '../package.json' with { type: 'json' }
@@ -53,25 +54,268 @@ cli
   })
 
 cli
-  .command('bookmarks:create', 'Create a bookmark or folder')
+  .command('bookmarks:create', 'Create one or more bookmarks or folders')
   .option('--title <title>', 'Bookmark title')
   .option('--url <url>', 'Bookmark URL')
   .option('--parent-id <parentId>', 'Parent folder id')
   .option('--index <index>', 'Position index within the parent folder')
+  .option(
+    '--file <path>',
+    'JSON file with an array of bookmarks to create (use --file=- for stdin)',
+  )
+  .example(
+    '  # Create a single bookmark\n  $ bb bookmarks:create --title "Vite" --url https://vitejs.dev',
+  )
+  .example(
+    '  # Create many bookmarks from a JSON file\n  $ bb bookmarks:create --file bookmarks.json',
+  )
   .action(
     async (
-      options: GlobalOptions & { title?: string; url?: string; parentId?: string; index?: string },
+      options: GlobalOptions & {
+        title?: string
+        url?: string
+        parentId?: string
+        index?: string
+        file?: string
+      },
     ) => {
-      const body = {
-        title: options.title,
-        url: options.url,
-        parentId: options.parentId === undefined ? undefined : String(options.parentId),
-        index: options.index === undefined ? undefined : Number(options.index),
+      const items: Array<{ title?: string; url?: string; parentId?: string; index?: number }> =
+        options.file
+          ? await readBatchFile(options.file)
+          : [
+              {
+                title: options.title,
+                url: options.url,
+                parentId: options.parentId === undefined ? undefined : String(options.parentId),
+                index: options.index === undefined ? undefined : Number(options.index),
+              },
+            ]
+
+      if (items.length === 0) {
+        throw new Error('No bookmarks provided')
       }
+
+      if (options.file) {
+        const results = await Promise.allSettled(
+          items.map((item) =>
+            request(options, '/bookmarks', {
+              body: JSON.stringify(item),
+              headers: { 'content-type': 'application/json' },
+              method: 'POST',
+            }),
+          ),
+        )
+        console.log(JSON.stringify(results, null, 2))
+      } else {
+        console.log(
+          JSON.stringify(
+            await request(options, '/bookmarks', {
+              body: JSON.stringify(items[0]),
+              headers: { 'content-type': 'application/json' },
+              method: 'POST',
+            }),
+            null,
+            2,
+          ),
+        )
+      }
+    },
+  )
+
+cli
+  .command('bookmarks:update [id]', 'Update one or more bookmark titles or URLs')
+  .option('--title <title>', 'New bookmark title')
+  .option('--url <url>', 'New bookmark URL')
+  .option(
+    '--file <path>',
+    'JSON file with an array of { id, title?, url? } (use --file=- for stdin)',
+  )
+  .example('  # Update a bookmark title\n  $ bb bookmarks:update 123 --title "New title"')
+  .example('  # Batch update from a JSON file\n  $ bb bookmarks:update --file updates.json')
+  .action(
+    async (
+      id: string | undefined,
+      options: GlobalOptions & { title?: string; url?: string; file?: string },
+    ) => {
+      const items: Array<{ id: string; title?: string; url?: string }> = options.file
+        ? await readBatchFile(options.file)
+        : [{ id: id!, title: options.title, url: options.url }]
+
+      if (items.length === 0) {
+        throw new Error('No bookmarks provided')
+      }
+
+      if (options.file) {
+        const results = await Promise.allSettled(
+          items.map((item) =>
+            request(options, `/bookmarks/${encodeURIComponent(item.id)}`, {
+              body: JSON.stringify({ title: item.title, url: item.url }),
+              headers: { 'content-type': 'application/json' },
+              method: 'PATCH',
+            }),
+          ),
+        )
+        console.log(JSON.stringify(results, null, 2))
+      } else {
+        console.log(
+          JSON.stringify(
+            await request(options, `/bookmarks/${encodeURIComponent(items[0].id)}`, {
+              body: JSON.stringify({ title: items[0].title, url: items[0].url }),
+              headers: { 'content-type': 'application/json' },
+              method: 'PATCH',
+            }),
+            null,
+            2,
+          ),
+        )
+      }
+    },
+  )
+
+cli
+  .command('bookmarks:move [id]', 'Move one or more bookmarks to another folder or position')
+  .option('--parent-id <parentId>', 'New parent folder id')
+  .option('--path <path>', 'Target folder path (e.g. Websites/Personal). Creates missing folders.')
+  .option('--index <index>', 'New position index')
+  .option(
+    '--file <path>',
+    'JSON file with an array of { id, parentId?, index? } (use --file=- for stdin)',
+  )
+  .example('  # Move to an existing folder by id\n  $ bb bookmarks:move 123 --parent-id 456')
+  .example(
+    '  # Move to a path, creating folders if needed\n  $ bb bookmarks:move 123 --path Websites/Personal',
+  )
+  .example('  # Batch move from a JSON file\n  $ bb bookmarks:move --file moves.json')
+  .action(
+    async (
+      id: string | undefined,
+      options: GlobalOptions & {
+        parentId?: string
+        path?: string
+        index?: string
+        file?: string
+      },
+    ) => {
+      if (options.parentId !== undefined && options.path !== undefined) {
+        throw new Error('Cannot use both --parent-id and --path')
+      }
+
+      const items: Array<{ id: string; parentId?: string; index?: number }> = options.file
+        ? await readBatchFile(options.file)
+        : [
+            {
+              id: id!,
+              parentId: options.parentId === undefined ? undefined : String(options.parentId),
+              index: options.index === undefined ? undefined : Number(options.index),
+            },
+          ]
+
+      if (items.length === 0) {
+        throw new Error('No bookmarks provided')
+      }
+
+      if (options.file) {
+        const results = await Promise.allSettled(
+          items.map(async (item) => {
+            if (options.path && item.parentId === undefined) {
+              return request(options, '/bookmarks/move-by-path', {
+                body: JSON.stringify({
+                  id: item.id,
+                  path: options.path,
+                  index: item.index,
+                }),
+                headers: { 'content-type': 'application/json' },
+                method: 'POST',
+              })
+            }
+            return request(options, `/bookmarks/${encodeURIComponent(item.id)}/move`, {
+              body: JSON.stringify({ parentId: item.parentId, index: item.index }),
+              headers: { 'content-type': 'application/json' },
+              method: 'POST',
+            })
+          }),
+        )
+        console.log(JSON.stringify(results, null, 2))
+      } else if (options.path) {
+        console.log(
+          JSON.stringify(
+            await request(options, '/bookmarks/move-by-path', {
+              body: JSON.stringify({
+                id: items[0].id,
+                path: options.path,
+                index: items[0].index,
+              }),
+              headers: { 'content-type': 'application/json' },
+              method: 'POST',
+            }),
+            null,
+            2,
+          ),
+        )
+      } else {
+        console.log(
+          JSON.stringify(
+            await request(options, `/bookmarks/${encodeURIComponent(items[0].id)}/move`, {
+              body: JSON.stringify({ parentId: items[0].parentId, index: items[0].index }),
+              headers: { 'content-type': 'application/json' },
+              method: 'POST',
+            }),
+            null,
+            2,
+          ),
+        )
+      }
+    },
+  )
+
+cli
+  .command('bookmarks:remove [id]', 'Remove one or more bookmarks or empty folders')
+  .option('--file <path>', 'JSON file with an array of bookmark ids (use --file=- for stdin)')
+  .example('  # Remove a single bookmark\n  $ bb bookmarks:remove 123')
+  .example('  # Remove many bookmarks from a JSON file\n  $ bb bookmarks:remove --file ids.json')
+  .action(async (id: string | undefined, options: GlobalOptions & { file?: string }) => {
+    const ids: string[] = options.file ? await readBatchFile(options.file) : [id!]
+
+    if (ids.length === 0) {
+      throw new Error('No bookmark ids provided')
+    }
+
+    if (options.file) {
+      const results = await Promise.allSettled(
+        ids.map((item) =>
+          request(options, `/bookmarks/${encodeURIComponent(item)}`, { method: 'DELETE' }),
+        ),
+      )
+      console.log(JSON.stringify(results, null, 2))
+    } else {
       console.log(
         JSON.stringify(
-          await request(options, '/bookmarks', {
-            body: JSON.stringify(body),
+          await request(options, `/bookmarks/${encodeURIComponent(ids[0])}`, { method: 'DELETE' }),
+          null,
+          2,
+        ),
+      )
+    }
+  })
+
+cli
+  .command('bookmarks:remove-tree [id]', 'Recursively remove a bookmark folder tree')
+  .option('--path <path>', 'Folder path to remove (e.g. Archive/Old)')
+  .example('  # Remove a folder tree by id\n  $ bb bookmarks:remove-tree 123')
+  .example('  # Remove a folder tree by path\n  $ bb bookmarks:remove-tree --path Archive/Old')
+  .action(async (id: string | undefined, options: GlobalOptions & { path?: string }) => {
+    if (id !== undefined && options.path !== undefined) {
+      throw new Error('Cannot use both [id] and --path')
+    }
+    if (id === undefined && options.path === undefined) {
+      throw new Error('Either [id] or --path is required')
+    }
+
+    if (options.path !== undefined) {
+      console.log(
+        JSON.stringify(
+          await request(options, '/bookmarks/remove-by-path', {
+            body: JSON.stringify({ path: options.path }),
             headers: { 'content-type': 'application/json' },
             method: 'POST',
           }),
@@ -79,67 +323,12 @@ cli
           2,
         ),
       )
-    },
-  )
-
-cli
-  .command('bookmarks:update <id>', 'Update a bookmark title or URL')
-  .option('--title <title>', 'New bookmark title')
-  .option('--url <url>', 'New bookmark URL')
-  .action(async (id: string, options: GlobalOptions & { title?: string; url?: string }) => {
-    console.log(
-      JSON.stringify(
-        await request(options, `/bookmarks/${encodeURIComponent(id)}`, {
-          body: JSON.stringify({ title: options.title, url: options.url }),
-          headers: { 'content-type': 'application/json' },
-          method: 'PATCH',
-        }),
-        null,
-        2,
-      ),
-    )
-  })
-
-cli
-  .command('bookmarks:move <id>', 'Move a bookmark to another folder or position')
-  .option('--parent-id <parentId>', 'New parent folder id')
-  .option('--index <index>', 'New position index')
-  .action(async (id: string, options: GlobalOptions & { parentId?: string; index?: string }) => {
-    const body = {
-      parentId: options.parentId === undefined ? undefined : String(options.parentId),
-      index: options.index === undefined ? undefined : Number(options.index),
+      return
     }
-    console.log(
-      JSON.stringify(
-        await request(options, `/bookmarks/${encodeURIComponent(id)}/move`, {
-          body: JSON.stringify(body),
-          headers: { 'content-type': 'application/json' },
-          method: 'POST',
-        }),
-        null,
-        2,
-      ),
-    )
-  })
 
-cli
-  .command('bookmarks:remove <id>', 'Remove a bookmark or empty folder')
-  .action(async (id: string, options: GlobalOptions) => {
     console.log(
       JSON.stringify(
-        await request(options, `/bookmarks/${encodeURIComponent(id)}`, { method: 'DELETE' }),
-        null,
-        2,
-      ),
-    )
-  })
-
-cli
-  .command('bookmarks:remove-tree <id>', 'Recursively remove a bookmark folder tree')
-  .action(async (id: string, options: GlobalOptions) => {
-    console.log(
-      JSON.stringify(
-        await request(options, `/bookmarks/${encodeURIComponent(id)}/tree`, { method: 'DELETE' }),
+        await request(options, `/bookmarks/${encodeURIComponent(id!)}/tree`, { method: 'DELETE' }),
         null,
         2,
       ),
@@ -260,4 +449,21 @@ async function request(options: GlobalOptions, path: string, init?: RequestInit)
   }
 
   return response.json()
+}
+
+async function readBatchFile<T>(path: string): Promise<T> {
+  const input = path === '-' ? await readStdin() : await readFile(path, 'utf-8')
+  return JSON.parse(input) as T
+}
+
+function readStdin(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let data = ''
+    process.stdin.setEncoding('utf8')
+    process.stdin.on('data', (chunk) => {
+      data += chunk
+    })
+    process.stdin.on('end', () => resolve(data))
+    process.stdin.on('error', reject)
+  })
 }

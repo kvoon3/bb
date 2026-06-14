@@ -120,13 +120,6 @@ export function createAppRouter(onShutdown?: () => void) {
     }),
   )
 
-  router.delete(
-    '/bookmarks/:id',
-    defineEventHandler(async (event) => {
-      return requireRpc().remove(decodeId(event))
-    }),
-  )
-
   router.post(
     '/bookmarks/:id/move',
     defineEventHandler(async (event) => {
@@ -140,10 +133,49 @@ export function createAppRouter(onShutdown?: () => void) {
     }),
   )
 
+  router.post(
+    '/bookmarks/move-by-path',
+    defineEventHandler(async (event) => {
+      const body = (await readBody(event)) as {
+        id: string
+        path: string
+        index?: number
+      }
+      if (!body.id || !body.path) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: 'id and path are required',
+        })
+      }
+      return requireRpc().moveByPath(body.id, body.path, body.index)
+    }),
+  )
+
+  router.post(
+    '/bookmarks/remove-by-path',
+    defineEventHandler(async (event) => {
+      const body = (await readBody(event)) as { path: string }
+      if (!body.path) {
+        throw createError({ statusCode: 400, statusMessage: 'path is required' })
+      }
+      await requireRpc().removeByPath(body.path)
+      return { ok: true }
+    }),
+  )
+
   router.delete(
     '/bookmarks/:id/tree',
     defineEventHandler(async (event) => {
-      return requireRpc().removeTree(decodeId(event))
+      await requireRpc().removeTree(decodeId(event))
+      return { ok: true }
+    }),
+  )
+
+  router.delete(
+    '/bookmarks/:id',
+    defineEventHandler(async (event) => {
+      await requireRpc().remove(decodeId(event))
+      return { ok: true }
     }),
   )
 

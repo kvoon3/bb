@@ -47,11 +47,11 @@ Commands:
   bookmarks:tree              Read the complete browser bookmark tree
   bookmarks:search <query>    Search browser bookmarks
   bookmarks:get <id>          Read one browser bookmark node by id
-  bookmarks:create            Create a bookmark or folder
-  bookmarks:update <id>       Update a bookmark title or URL
-  bookmarks:move <id>         Move a bookmark to another folder or position
-  bookmarks:remove <id>       Remove a bookmark or empty folder
-  bookmarks:remove-tree <id>  Recursively remove a bookmark folder tree
+  bookmarks:create            Create one or more bookmarks or folders
+  bookmarks:update [id]       Update one or more bookmark titles or URLs
+  bookmarks:move [id]         Move one or more bookmarks to another folder, position, or path
+  bookmarks:remove [id]       Remove one or more bookmarks or empty folders
+  bookmarks:remove-tree [id]  Recursively remove a bookmark folder tree
   bookmarks:unused            List bookmarks not visited recently
   daemon                      Start the bb daemon in the foreground
   daemon:stop                 Stop the running bb daemon
@@ -79,6 +79,57 @@ Options:
 ```
 
 <!-- cli-help-end -->
+
+### Examples
+
+Create one or more bookmarks:
+
+```bash
+# Create a single bookmark
+$ bb bookmarks:create --title "Vite" --url https://vitejs.dev
+
+# Create many bookmarks from a JSON file
+$ bb bookmarks:create --file bookmarks.json
+```
+
+Update bookmarks:
+
+```bash
+# Update a bookmark title
+$ bb bookmarks:update 123 --title "New title"
+
+# Batch update from a JSON file
+$ bb bookmarks:update --file updates.json
+```
+
+Move bookmarks to another folder or path:
+
+```bash
+# Move to an existing folder by id
+$ bb bookmarks:move 123 --parent-id 456
+
+# Move to a path, creating folders if needed
+$ bb bookmarks:move 123 --path Websites/Personal
+
+# Batch move from a JSON file
+$ bb bookmarks:move --file moves.json
+```
+
+Remove bookmarks or folder trees:
+
+```bash
+# Remove a single bookmark
+$ bb bookmarks:remove 123
+
+# Remove many bookmarks from a JSON file
+$ bb bookmarks:remove --file ids.json
+
+# Remove a folder tree by id
+$ bb bookmarks:remove-tree 123
+
+# Remove a folder tree by path
+$ bb bookmarks:remove-tree --path Archive/Old
+```
 
 ## License
 

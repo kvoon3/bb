@@ -14,6 +14,54 @@ const daemonUrl = daemonWebSocketUrl(DEFAULT_DAEMON_PORT, DEFAULT_DAEMON_HOST)
 
 let offscreenConnected = false
 
+function findByPath(tree: BookmarkNode[], path: string): BookmarkNode | undefined {
+  const segments = path.split('/').filter(Boolean)
+  const root = tree[0]?.children?.[0]
+  if (!root) {
+    return undefined
+  }
+
+  let current: BookmarkNode = root
+  for (const segment of segments) {
+    const child = current.children?.find(
+      (node) => node.title === segment && node.url === undefined,
+    )
+    if (!child) {
+      return undefined
+    }
+    current = child
+  }
+  return current
+}
+
+async function ensurePath(tree: BookmarkNode[], path: string): Promise<BookmarkNode> {
+  const segments = path.split('/').filter(Boolean)
+  const root = tree[0]?.children?.[0]
+  if (!root) {
+    throw new Error('Could not find bookmark root')
+  }
+
+  let current: BookmarkNode = root
+  let parentId = root.id
+
+  for (const segment of segments) {
+    const child = current.children?.find(
+      (node) => node.title === segment && node.url === undefined,
+    )
+    if (child) {
+      current = child
+      parentId = child.id
+      continue
+    }
+
+    const created = (await chrome.bookmarks.create({ title: segment, parentId })) as BookmarkNode
+    current = created
+    parentId = created.id
+  }
+
+  return current
+}
+
 chrome.runtime.onMessage.addListener(function (message, _sender, sendResponse) {
   if (message?.type === 'offscreen:rpc') {
     void handleRpc(message.method, message.args)
@@ -90,11 +138,24 @@ const rpcImpl: ExtensionRpc = {
   async move(id, changes) {
     return chrome.bookmarks.move(id, changes) as Promise<BookmarkNode>
   },
+  async moveByPath(id, path, index) {
+    const tree = (await chrome.bookmarks.getTree()) as BookmarkNode[]
+    const target = await ensurePath(tree, path)
+    return chrome.bookmarks.move(id, { parentId: target.id, index }) as Promise<BookmarkNode>
+  },
   async remove(id) {
     await chrome.bookmarks.remove(id)
   },
   async removeTree(id) {
     await chrome.bookmarks.removeTree(id)
+  },
+  async removeByPath(path) {
+    const tree = (await chrome.bookmarks.getTree()) as BookmarkNode[]
+    const node = findByPath(tree, path)
+    if (!node) {
+      throw new Error(`Path not found: ${path}`)
+    }
+    await chrome.bookmarks.removeTree(node.id)
   },
 }
 

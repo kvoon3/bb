@@ -3,11 +3,11 @@ name: bb-cli
 description: Use the bb CLI to install, run, and troubleshoot the browser bookmark bridge.
 metadata:
   author: Kevin Kwong
-  version: "2026.6.12"
+  version: "2026.6.14"
   source: Generated from local package `packages/cli`
 ---
 
-> The skill is based on `@kvoon/bb-cli` v0.1.1, generated at 2026-06-12.
+> The skill is based on `@kvoon/bb-cli` v0.1.1, generated at 2026-06-14.
 
 `bb` is the command-line interface for the BB Bookmarks Bridge. It installs from npm, talks to a local daemon, and lets agents read and manage browser bookmarks. The browser extension must be installed and connected for bookmark commands to work; the agent can guide you through installation but will not install it for you.
 
@@ -27,6 +27,8 @@ metadata:
 | Topic | Description | Reference |
 |-------|-------------|-----------|
 | Bookmark Commands | Read, search, create, update, move, and remove bookmarks | [features-bookmarks-commands](references/features-bookmarks-commands.md) |
+| Batch Operations | Create, update, move, or remove many bookmarks from JSON files | [features-batch-operations](references/features-batch-operations.md) |
+| Path Operations | Move bookmarks or remove trees by folder path | [features-path-operations](references/features-path-operations.md) |
 
 ## Best Practices
 

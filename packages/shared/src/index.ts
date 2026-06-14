@@ -27,8 +27,10 @@ export interface ExtensionRpc {
   }): Promise<BookmarkNode>
   update(id: string, changes: { title?: string; url?: string }): Promise<BookmarkNode>
   move(id: string, changes: { parentId?: string; index?: number }): Promise<BookmarkNode>
+  moveByPath(id: string, path: string, index?: number): Promise<BookmarkNode>
   remove(id: string): Promise<void>
   removeTree(id: string): Promise<void>
+  removeByPath(path: string): Promise<void>
 }
 
 export function errorMessage(error: unknown): string {

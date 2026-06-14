@@ -22,19 +22,83 @@ bb bookmarks:get <id>
 
 ## Write Commands
 
+### Create
+
 ```bash
-# Create a bookmark or folder
+# Create a single bookmark or folder
 bb bookmarks:create --title Example --url https://example.com --parent-id 2 --index 0
 
-# Update title or URL
+# Create a folder
+bb bookmarks:create --title Archive --parent-id 1
+
+# Batch create from a JSON file
+bb bookmarks:create --file bookmarks.json
+```
+
+JSON file shape for batch create:
+
+```json
+[
+  { "title": "Vite", "url": "https://vitejs.dev" },
+  { "title": "Archive", "parentId": "1" }
+]
+```
+
+### Update
+
+```bash
+# Update a single bookmark
 bb bookmarks:update <id> --title "New title" --url https://new.example.com
 
-# Move to another folder or position
+# Batch update from a JSON file
+bb bookmarks:update --file updates.json
+```
+
+JSON file shape for batch update:
+
+```json
+[
+  { "id": "123", "title": "New title" },
+  { "id": "456", "url": "https://new.example.com" }
+]
+```
+
+### Move
+
+```bash
+# Move to an existing folder by id
 bb bookmarks:move <id> --parent-id 3 --index 1
 
-# Remove
+# Move to a folder path, creating missing folders automatically
+bb bookmarks:move <id> --path Websites/Personal
+
+# Batch move from a JSON file
+bb bookmarks:move --file moves.json
+```
+
+JSON file shape for batch move:
+
+```json
+[
+  { "id": "123", "parentId": "3" },
+  { "id": "456", "path": "Websites/Personal" }
+]
+```
+
+### Remove
+
+```bash
+# Remove a single bookmark or empty folder
 bb bookmarks:remove <id>
+
+# Batch remove from a JSON file
+bb bookmarks:remove --file ids.json
+
+# Recursively remove a folder tree by id
 bb bookmarks:remove-tree <id>
+
+# Recursively remove a folder tree by path
+bb bookmarks:remove-tree --path Archive/Old
 ```
 
 ## Find Unused Bookmarks
@@ -52,8 +116,10 @@ bb bookmarks:unused --json
 
 ## Key Points
 
+- `bookmarks:create`, `bookmarks:update`, `bookmarks:move`, and `bookmarks:remove` accept `--file <path>` for batch operations. Use `--file=-` to read JSON from stdin.
+- `bookmarks:move --path` and `bookmarks:remove-tree --path` resolve folder paths in the browser extension. Missing folders are created automatically when moving.
 - `bookmarks:remove` only removes single bookmarks or empty folders; use `remove-tree` for folders with children.
-- The CLI URL-encodes IDs before sending them to the daemon.
+- Batch results are returned as a JSON array of `{ status: "fulfilled", value: ... }` or `{ status: "rejected", reason: ... }`.
 - A 503 response means the browser extension is not connected. Check the extension status before retrying.
 
 <!--
