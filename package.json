@@ -9,7 +9,7 @@
     "dev:daemon": "vp run @bb/daemon#dev",
     "bb": "vp run @kvoon/bb-cli#dev",
     "update": "tsx scripts/update-docs.ts",
-    "prepare": "nr update",
+    "prepare": "pnpm run update",
     "up": "vpx taze -I major",
     "build": "pnpm -r build"
   },
