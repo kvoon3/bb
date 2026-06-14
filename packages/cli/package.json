@@ -24,7 +24,6 @@
     "start": "node dist/index.mjs",
     "check": "vp check",
     "prepublishOnly": "vp run build",
-    "publish": "pnpm public",
     "bump": "bumpp"
   },
   "dependencies": {
