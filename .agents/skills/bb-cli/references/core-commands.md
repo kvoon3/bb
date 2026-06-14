@@ -35,12 +35,14 @@ Use `bb -h` to show all commands. Use `bb <command> --help` for command-specific
 | `bb bookmarks:remove [id]`       | Remove one or more bookmarks or empty folders |
 | `bb bookmarks:remove-tree [id]`  | Recursively remove a folder by id or path     |
 | `bb bookmarks:unused`            | List bookmarks not visited recently           |
+| `bb bookmarks:organize <path>`   | Organize bookmarks in a folder by rules       |
 
 ## Key Points
 
 - Use `--json` when piping output to other tools.
 - Most write commands support `--file <path>` for batch input.
 - `bookmarks:move` and `bookmarks:remove-tree` support `--path` for path-based operations.
+- `bookmarks:organize` applies rules to group bookmarks into subfolders.
 - If bookmark commands fail with a 503 error, the browser extension is not connected. See the extension troubleshooting reference.
 
 <!--

@@ -81,9 +81,29 @@ JSON file shape for batch move:
 ```json
 [
   { "id": "123", "parentId": "3" },
-  { "id": "456", "path": "Websites/Personal" }
+  { "id": "456", "parentId": "3", "index": 0 }
 ]
 ```
+
+You can also provide a default `--path` for items that do not specify a `parentId`:
+
+```bash
+bb bookmarks:move --file moves.json --path Websites/Personal
+```
+
+### Organize
+
+```bash
+# Preview moves without changing anything
+bb bookmarks:organize D --rule "url:**/github.com/** -> Git" --dry-run
+
+# Move GitHub bookmarks to D/Git and map-related bookmarks to D/Map
+bb bookmarks:organize D \
+  --rule "url:**/github.com/** -> Git" \
+  --rule "title:*Map* -> Map"
+```
+
+Rules use [picomatch](https://github.com/micromatch/picomatch) glob patterns. For example, `url:**/github.com/**` matches any URL containing `github.com`, and `title:*Git*` matches titles containing `Git`. The target folder is relative to the folder being organized. Missing folders are created automatically.
 
 ### Remove
 
@@ -117,6 +137,7 @@ bb bookmarks:unused --json
 ## Key Points
 
 - `bookmarks:create`, `bookmarks:update`, `bookmarks:move`, and `bookmarks:remove` accept `--file <path>` for batch operations. Use `--file=-` to read JSON from stdin.
+- `bookmarks:organize` applies `--rule` patterns to a folder and moves matching bookmarks into subfolders. Use `--dry-run` to preview.
 - `bookmarks:move --path` and `bookmarks:remove-tree --path` resolve folder paths in the browser extension. Missing folders are created automatically when moving.
 - `bookmarks:remove` only removes single bookmarks or empty folders; use `remove-tree` for folders with children.
 - Batch results are returned as a JSON array of `{ status: "fulfilled", value: ... }` or `{ status: "rejected", reason: ... }`.

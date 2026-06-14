@@ -28,12 +28,14 @@
     "bump": "bumpp"
   },
   "dependencies": {
-    "cac": "^6.7.14"
+    "cac": "^6.7.14",
+    "picomatch": "^4.0.4"
   },
   "devDependencies": {
     "@bb/daemon": "workspace:*",
     "@bb/shared": "workspace:*",
     "@types/node": "catalog:",
+    "@types/picomatch": "^4.0.0",
     "tsx": "catalog:",
     "typescript": "catalog:",
     "vite-plus": "catalog:"

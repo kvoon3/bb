@@ -25,7 +25,13 @@ The daemon must be running for any bookmark command to work.
 
 ## Background Task
 
-If your agent supports background tasks, run `bb daemon` as a background task instead of `&` so the agent can monitor it.
+If your agent supports background tasks, run `bb daemon` as a background task instead of `&` so the agent can monitor it. Disable the task timeout if possible, because the daemon is meant to run for the whole session:
+
+```bash
+bb daemon
+```
+
+When invoking via a tool that supports background tasks, mark the task as long-running / without timeout so it is not killed while bookmark commands are still needed.
 
 ## Reconnecting
 

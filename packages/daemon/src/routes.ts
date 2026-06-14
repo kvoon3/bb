@@ -1,4 +1,4 @@
-import { EXTENSION_WS_PATH, type ExtensionRpc } from '@bb/shared'
+import { errorMessage, EXTENSION_WS_PATH, type ExtensionRpc, type MoveByPathItem } from '@bb/shared'
 import { createBirpc, type BirpcReturn } from 'birpc'
 import type { H3Event } from 'h3'
 import {
@@ -136,10 +136,25 @@ export function createAppRouter(onShutdown?: () => void) {
   router.post(
     '/bookmarks/move-by-path',
     defineEventHandler(async (event) => {
-      const body = (await readBody(event)) as {
-        id: string
-        path: string
-        index?: number
+      const body = (await readBody(event)) as MoveByPathItem | MoveByPathItem[]
+      if (Array.isArray(body)) {
+        for (const [i, item] of body.entries()) {
+          if (!item || typeof item !== 'object' || !item.id || !item.path) {
+            throw createError({
+              statusCode: 400,
+              statusMessage: `item at index ${i} is missing id or path`,
+            })
+          }
+        }
+        try {
+          return await requireRpc().moveByPathBatch(body)
+        } catch (error) {
+          console.error('move-by-path error:', error)
+          throw createError({
+            statusCode: 500,
+            statusMessage: errorMessage(error),
+          })
+        }
       }
       if (!body.id || !body.path) {
         throw createError({
@@ -147,7 +162,15 @@ export function createAppRouter(onShutdown?: () => void) {
           statusMessage: 'id and path are required',
         })
       }
-      return requireRpc().moveByPath(body.id, body.path, body.index)
+      try {
+        return await requireRpc().moveByPath(body.id, body.path, body.index)
+      } catch (error) {
+        console.error('move-by-path error:', error)
+        throw createError({
+          statusCode: 500,
+          statusMessage: errorMessage(error),
+        })
+      }
     }),
   )
 

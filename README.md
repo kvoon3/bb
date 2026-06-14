@@ -49,10 +49,11 @@ Commands:
   bookmarks:get <id>          Read one browser bookmark node by id
   bookmarks:create            Create one or more bookmarks or folders
   bookmarks:update [id]       Update one or more bookmark titles or URLs
-  bookmarks:move [id]         Move one or more bookmarks to another folder, position, or path
+  bookmarks:move [id]         Move one or more bookmarks to another folder or position
   bookmarks:remove [id]       Remove one or more bookmarks or empty folders
   bookmarks:remove-tree [id]  Recursively remove a bookmark folder tree
   bookmarks:unused            List bookmarks not visited recently
+  bookmarks:organize <path>   Organize bookmarks in a folder by rules (rule targets are created as subfolders of <path>)
   daemon                      Start the bb daemon in the foreground
   daemon:stop                 Stop the running bb daemon
 
@@ -67,6 +68,7 @@ For more info, run any command with the `--help` flag:
   $ bb bookmarks:remove --help
   $ bb bookmarks:remove-tree --help
   $ bb bookmarks:unused --help
+  $ bb bookmarks:organize --help
   $ bb daemon --help
   $ bb daemon:stop --help
 

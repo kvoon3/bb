@@ -64,6 +64,9 @@ function connect() {
       moveByPath(id, path, index) {
         return callBackground('moveByPath', id, path, index)
       },
+      moveByPathBatch(items) {
+        return callBackground('moveByPathBatch', items)
+      },
       remove(id) {
         return callBackground('remove', id)
       },
@@ -104,6 +107,6 @@ async function callBackground<K extends keyof ExtensionRpc>(
     method,
     args,
   })) as { result?: unknown; error?: string }
-  if (response.error) throw new Error(response.error)
+  if (response.error) throw { message: response.error }
   return response.result as Awaited<ReturnType<ExtensionRpc[K]>>
 }

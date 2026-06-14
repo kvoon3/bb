@@ -2,10 +2,17 @@
 import { readFile } from 'node:fs/promises'
 
 import { startDaemon } from '@bb/daemon'
-import { DEFAULT_DAEMON_HOST, DEFAULT_DAEMON_PORT, errorMessage } from '@bb/shared'
+import {
+  DEFAULT_DAEMON_HOST,
+  DEFAULT_DAEMON_PORT,
+  errorMessage,
+  findNodeByPath,
+  type BookmarkNode,
+} from '@bb/shared'
 import { cac } from 'cac'
 
 import packageJson from '../package.json' with { type: 'json' }
+import { matchRule, normalizeRules } from './rules.js'
 import { daemonBaseUrl } from './url.js'
 
 const cli = cac('bb')
@@ -186,6 +193,9 @@ cli
     '  # Move to a path, creating folders if needed\n  $ bb bookmarks:move 123 --path Websites/Personal',
   )
   .example('  # Batch move from a JSON file\n  $ bb bookmarks:move --file moves.json')
+  .example(
+    '  # Batch move to a default path (items without parentId use --path)\n  $ bb bookmarks:move --file moves.json --path Archive',
+  )
   .action(
     async (
       id: string | undefined,
@@ -196,6 +206,10 @@ cli
         file?: string
       },
     ) => {
+      if (options.parentId !== undefined && options.path !== undefined) {
+        throw new Error('Cannot use both --parent-id and --path')
+      }
+
       if (options.parentId !== undefined && options.path !== undefined) {
         throw new Error('Cannot use both --parent-id and --path')
       }
@@ -215,9 +229,17 @@ cli
       }
 
       if (options.file) {
+        for (const [i, item] of items.entries()) {
+          if (item.parentId === undefined && options.path === undefined) {
+            throw new Error(
+              `Batch move item at index ${i} must specify parentId or use --path as a fallback`,
+            )
+          }
+        }
+
         const results = await Promise.allSettled(
           items.map(async (item) => {
-            if (options.path && item.parentId === undefined) {
+            if (item.parentId === undefined) {
               return request(options, '/bookmarks/move-by-path', {
                 body: JSON.stringify({
                   id: item.id,
@@ -401,6 +423,128 @@ cli
       console.log()
     }
   })
+
+cli
+  .command(
+    'bookmarks:organize <path>',
+    'Organize bookmarks in a folder by rules (rule targets are created as subfolders of <path>)',
+  )
+  .option(
+    '--rule <rule>',
+    'Rule in the form "url:<pattern> -> <subfolder>" or "title:<pattern> -> <subfolder>"',
+  )
+  .option('--dry-run', 'Preview changes without moving bookmarks')
+  .example(
+    '  # Move GitHub bookmarks into D/Git\n  $ bb bookmarks:organize D --rule "url:**/github.com/** -> Git" --dry-run',
+  )
+  .example(
+    '  # Organize by title keywords under D\n  $ bb bookmarks:organize D --rule "title:*Git* -> Git" --rule "title:*Map* -> Map"',
+  )
+  .action(
+    async (
+      path: string,
+      options: GlobalOptions & {
+        rule?: string | string[]
+        dryRun?: boolean
+      },
+    ) => {
+      const rules = normalizeRules(options.rule)
+      if (rules.length === 0) {
+        throw new Error('At least one --rule is required')
+      }
+
+      const tree = (await request(options, '/bookmarks/tree')) as BookmarkNode[]
+      const source = findNodeByPath(tree, path)
+      if (!source) {
+        throw new Error(`Folder not found: ${path}`)
+      }
+      const sourceId = source.id
+
+      const bookmarks = (source.children || []).filter((node) => node.url !== undefined)
+      const moves: Array<{ id: string; title: string; url: string; targetPath: string }> = []
+
+      for (const bookmark of bookmarks) {
+        const targetPath = matchRule(rules, bookmark)
+        if (targetPath) {
+          moves.push({
+            id: bookmark.id,
+            title: bookmark.title,
+            url: bookmark.url || '',
+            targetPath,
+          })
+        }
+      }
+
+      if (moves.length === 0) {
+        console.log('No bookmarks match the given rules')
+        return
+      }
+
+      if (options.dryRun) {
+        console.log(`Would organize ${moves.length} bookmark(s) in "${path}":\n`)
+        for (const m of moves) {
+          console.log(`  [${m.targetPath}] ${m.title}`)
+          console.log(`    ${m.url}`)
+        }
+        return
+      }
+
+      // Ensure target folders exist and move bookmarks
+      const folderIds = new Map<string, string>()
+      folderIds.set('', sourceId)
+
+      async function ensureTargetFolder(targetPath: string): Promise<string> {
+        if (folderIds.has(targetPath)) {
+          return folderIds.get(targetPath)!
+        }
+
+        const segments = targetPath.split('/').filter(Boolean)
+        let parentId = sourceId
+        let currentPath = ''
+
+        for (const segment of segments) {
+          currentPath = currentPath ? `${currentPath}/${segment}` : segment
+          if (folderIds.has(currentPath)) {
+            parentId = folderIds.get(currentPath)!
+            continue
+          }
+
+          const created = (await request(options, '/bookmarks', {
+            body: JSON.stringify({ title: segment, parentId }),
+            headers: { 'content-type': 'application/json' },
+            method: 'POST',
+          })) as BookmarkNode
+          folderIds.set(currentPath, created.id)
+          parentId = created.id
+        }
+
+        return parentId
+      }
+
+      const results = await Promise.allSettled(
+        moves.map(async (m) => {
+          const parentId = await ensureTargetFolder(m.targetPath)
+          return request(options, `/bookmarks/${encodeURIComponent(m.id)}/move`, {
+            body: JSON.stringify({ parentId }),
+            headers: { 'content-type': 'application/json' },
+            method: 'POST',
+          })
+        }),
+      )
+
+      const succeeded = results.filter((r) => r.status === 'fulfilled').length
+      const failed = results.filter((r) => r.status === 'rejected').length
+      console.log(`Organized ${succeeded} bookmark(s), ${failed} failed`)
+
+      if (failed > 0) {
+        const errors = results
+          .map((r, i) => ({ r, i }))
+          .filter(({ r }) => r.status === 'rejected')
+          .map(({ r, i }) => ({ bookmark: moves[i], reason: (r as PromiseRejectedResult).reason }))
+        console.log(JSON.stringify(errors, null, 2))
+      }
+    },
+  )
 
 cli
   .command('daemon', 'Start the bb daemon in the foreground')
