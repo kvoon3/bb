@@ -1,6 +1,6 @@
 {
   "name": "@kvoon/bb-cli",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "CLI for bb",
   "license": "MIT",
   "repository": {
@@ -9,7 +9,7 @@
     "directory": "packages/cli"
   },
   "bin": {
-    "bb": "./dist/index.mjs"
+    "bb": "dist/index.mjs"
   },
   "files": [
     "dist"
