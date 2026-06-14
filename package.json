@@ -14,6 +14,7 @@
     "build": "pnpm -r build"
   },
   "devDependencies": {
+    "tsx": "catalog:",
     "vite-plus": "catalog:"
   },
   "engines": {
