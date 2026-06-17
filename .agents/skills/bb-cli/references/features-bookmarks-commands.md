@@ -13,6 +13,9 @@ All bookmark commands are grouped under the `bookmarks:` namespace. They require
 # Full bookmark tree
 bb bookmarks:tree
 
+# All folders (lightweight list for choosing a parent folder)
+bb bookmarks:folders
+
 # Search
 bb bookmarks:search vite
 

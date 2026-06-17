@@ -79,6 +79,13 @@ export function createAppRouter(onShutdown?: () => void) {
   )
 
   router.get(
+    '/bookmarks/folders',
+    defineEventHandler(async () => {
+      return requireRpc().getFolders()
+    }),
+  )
+
+  router.get(
     '/bookmarks/search',
     defineEventHandler(async (event) => {
       const rawQuery = getQuery(event).q

@@ -41,6 +41,12 @@ cli
   })
 
 cli
+  .command('bookmarks:folders', 'List all bookmark folders')
+  .action(async (options: GlobalOptions) => {
+    console.log(JSON.stringify(await request(options, '/bookmarks/folders'), null, 2))
+  })
+
+cli
   .command('bookmarks:search <query>', 'Search browser bookmarks')
   .action(async (query: string, options: GlobalOptions) => {
     console.log(

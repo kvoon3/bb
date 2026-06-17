@@ -18,6 +18,7 @@ POST   /shutdown
 
 ```text
 GET    /bookmarks/tree
+GET    /bookmarks/folders
 GET    /bookmarks/search?q=<query>
 GET    /bookmarks/:id
 POST   /bookmarks

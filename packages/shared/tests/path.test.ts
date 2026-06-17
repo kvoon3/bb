@@ -1,6 +1,6 @@
 import { expect, test, vi } from 'vite-plus/test'
 
-import { ensurePath, findNodeByPath } from '../src/index.ts'
+import { ensurePath, findNodeByPath, getFoldersFromTree } from '../src/index.ts'
 import type { BookmarkNode } from '../src/index.ts'
 
 type NodeParams = {
@@ -131,4 +131,32 @@ test('ensurePath creates folders under the root', async () => {
 
 test('ensurePath throws when bookmark root is missing', async () => {
   await expect(ensurePath([], 'Work', vi.fn())).rejects.toThrow('Could not find bookmark root')
+})
+
+test('getFoldersFromTree returns all folder nodes', () => {
+  const tree = makeTree([
+    {
+      id: 'work',
+      title: 'Work',
+      children: [
+        { id: 'clients', title: 'Clients', children: [] },
+        { id: 'github', title: 'GitHub', url: 'https://github.com' },
+      ],
+    },
+  ])
+
+  const folders = getFoldersFromTree(tree)
+  expect(folders.map((n) => n.id)).toEqual(['0', '1', 'work', 'clients'])
+})
+
+test('getFoldersFromTree ignores bookmark nodes', () => {
+  const tree = makeTree([{ id: 'github', title: 'GitHub', url: 'https://github.com' }])
+
+  const folders = getFoldersFromTree(tree)
+  expect(folders.every((n) => n.url === undefined)).toBe(true)
+  expect(folders.map((n) => n.id)).toEqual(['0', '1'])
+})
+
+test('getFoldersFromTree returns empty array when tree is empty', () => {
+  expect(getFoldersFromTree([])).toEqual([])
 })

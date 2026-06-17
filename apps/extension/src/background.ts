@@ -5,6 +5,7 @@ import {
   type ExtensionRpc,
   findNodeByPath,
   ensurePath,
+  getFoldersFromTree,
 } from '@bb/shared'
 import { errorMessage } from '@bb/shared'
 
@@ -73,6 +74,10 @@ async function hasOffscreenDocument(): Promise<boolean> {
 const rpcImpl: ExtensionRpc = {
   async getTree() {
     return chrome.bookmarks.getTree()
+  },
+  async getFolders() {
+    const tree = await chrome.bookmarks.getTree()
+    return getFoldersFromTree(tree)
   },
   async search(query) {
     return chrome.bookmarks.search(query)

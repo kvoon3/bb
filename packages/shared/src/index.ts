@@ -25,6 +25,7 @@ export interface MoveByPathItem {
 
 export interface ExtensionRpc {
   getTree(): Promise<BookmarkNode[]>
+  getFolders(): Promise<BookmarkNode[]>
   search(query: string): Promise<BookmarkNode[]>
   get(id: string): Promise<BookmarkNode[]>
   getChildren(id: string): Promise<BookmarkNode[]>
@@ -41,6 +42,24 @@ export interface ExtensionRpc {
   remove(id: string): Promise<void>
   removeTree(id: string): Promise<void>
   removeByPath(path: string): Promise<void>
+}
+
+export function getFoldersFromTree(nodes: BookmarkNode[]): BookmarkNode[] {
+  const folders: BookmarkNode[] = []
+
+  function walk(items: BookmarkNode[]) {
+    for (const node of items) {
+      if (node.url === undefined) {
+        folders.push(node)
+      }
+      if (node.children) {
+        walk(node.children)
+      }
+    }
+  }
+
+  walk(nodes)
+  return folders
 }
 
 export function findNodeByPath(tree: BookmarkNode[], path: string): BookmarkNode | undefined {

@@ -43,6 +43,9 @@ function connect() {
       getTree() {
         return callBackground('getTree')
       },
+      getFolders() {
+        return callBackground('getFolders')
+      },
       search(query) {
         return callBackground('search', query)
       },

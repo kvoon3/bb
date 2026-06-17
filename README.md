@@ -45,6 +45,7 @@ Usage:
 Commands:
   health                      Check daemon and extension status
   bookmarks:tree              Read the complete browser bookmark tree
+  bookmarks:folders           List all bookmark folders
   bookmarks:search <query>    Search browser bookmarks
   bookmarks:get <id>          Read one browser bookmark node by id
   bookmarks:create            Create one or more bookmarks or folders
@@ -60,6 +61,7 @@ Commands:
 For more info, run any command with the `--help` flag:
   $ bb health --help
   $ bb bookmarks:tree --help
+  $ bb bookmarks:folders --help
   $ bb bookmarks:search --help
   $ bb bookmarks:get --help
   $ bb bookmarks:create --help
