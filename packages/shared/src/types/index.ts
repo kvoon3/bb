@@ -312,4 +312,46 @@ export namespace tabs {
      */
     groupId?: number | undefined
   }
+
+  /** Object passed to the create() function. */
+  export interface CreateProperties {
+    /** The window to create the new tab in. Defaults to the current window. */
+    windowId?: number | undefined
+    /** The position the tab should take in a window. The provided value is clamped to between zero and the number of tabs in the window. */
+    index?: number | undefined
+    /** The URL to initially navigate the tab to. Fully-qualified URLs must include a scheme (i.e., 'http://www.google.com', not 'www.google.com'). Non-fully-qualified URLs are treated as relative URLs within the extension. Defaults to the New Tab Page. */
+    url?: string | undefined
+    /** Whether the tab should become the active tab in the window. Does not affect whether the window is focused (see {@link windows.WINDOW_ID_CURRENT}). Defaults to true. */
+    active?: boolean | undefined
+    /** Whether the tab should be pinned. Defaults to false. */
+    pinned?: boolean | undefined
+    /** The tab's opener tab ID. */
+    openerTabId?: number | undefined
+  }
+
+  /** Object passed to the update() function. */
+  export interface UpdateProperties {
+    /** A URL to navigate the tab to. */
+    url?: string | undefined
+    /** Whether the tab should be active. Does not affect whether the window is focused. */
+    active?: boolean | undefined
+    /** Whether the tab should be highlighted. */
+    highlighted?: boolean | undefined
+    /** Whether the tab should be pinned. */
+    pinned?: boolean | undefined
+    /** Whether the tab should be muted. */
+    muted?: boolean | undefined
+    /** The tab's new opener tab ID. */
+    openerTabId?: number | undefined
+    /** Whether the tab should be auto-discardable. */
+    autoDiscardable?: boolean | undefined
+  }
+
+  /** Object passed to the move() function. */
+  export interface MoveProperties {
+    /** Defaults to the window the tab is currently in. */
+    windowId?: number | undefined
+    /** The position to move the window to. Use -1 to place the tab at the end of the window. */
+    index: number
+  }
 }

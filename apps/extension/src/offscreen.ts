@@ -82,6 +82,27 @@ function connect() {
       getTabs(query) {
         return callBackground('getTabs', query)
       },
+      createTab(params) {
+        return callBackground('createTab', params)
+      },
+      reloadTab(tabId, bypassCache) {
+        return callBackground('reloadTab', tabId, bypassCache)
+      },
+      closeTab(tabId) {
+        return callBackground('closeTab', tabId)
+      },
+      activateTab(tabId) {
+        return callBackground('activateTab', tabId)
+      },
+      updateTab(tabId, changes) {
+        return callBackground('updateTab', tabId, changes)
+      },
+      duplicateTab(tabId) {
+        return callBackground('duplicateTab', tabId)
+      },
+      moveTab(tabId, moveProperties) {
+        return callBackground('moveTab', tabId, moveProperties)
+      },
     },
     {
       post(data) {

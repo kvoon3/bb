@@ -83,6 +83,72 @@ export function createAppRouter(onShutdown?: () => void) {
     }),
   )
 
+  router.post(
+    '/tabs',
+    defineEventHandler(async (event) => {
+      const body = await readBody(event)
+      return requireRpc().createTab(body as { url?: string; active?: boolean; pinned?: boolean })
+    }),
+  )
+
+  router.post(
+    '/tabs/:id/reload',
+    defineEventHandler(async (event) => {
+      const query = getQuery(event)
+      await requireRpc().reloadTab(decodeTabId(event), query.bypassCache === 'true')
+      return { ok: true }
+    }),
+  )
+
+  router.delete(
+    '/tabs/:id',
+    defineEventHandler(async (event) => {
+      await requireRpc().closeTab(decodeTabId(event))
+      return { ok: true }
+    }),
+  )
+
+  router.post(
+    '/tabs/:id/activate',
+    defineEventHandler(async (event) => {
+      return requireRpc().activateTab(decodeTabId(event))
+    }),
+  )
+
+  router.patch(
+    '/tabs/:id',
+    defineEventHandler(async (event) => {
+      const body = await readBody(event)
+      const { id: _ignored, ...changes } = body as {
+        id?: unknown
+        url?: string
+        active?: boolean
+        pinned?: boolean
+      }
+      return requireRpc().updateTab(decodeTabId(event), changes)
+    }),
+  )
+
+  router.post(
+    '/tabs/:id/duplicate',
+    defineEventHandler(async (event) => {
+      return requireRpc().duplicateTab(decodeTabId(event))
+    }),
+  )
+
+  router.post(
+    '/tabs/:id/move',
+    defineEventHandler(async (event) => {
+      const body = await readBody(event)
+      const { id: _ignored, ...moveProperties } = body as {
+        id?: unknown
+        index: number
+        windowId?: number
+      }
+      return requireRpc().moveTab(decodeTabId(event), moveProperties)
+    }),
+  )
+
   router.get(
     '/bookmarks/tree',
     defineEventHandler(async () => {
@@ -234,6 +300,10 @@ function requireRpc() {
 
 function decodeId(event: H3Event): string {
   return decodeURIComponent(getRouterParams(event).id as string)
+}
+
+function decodeTabId(event: H3Event): number {
+  return Number(getRouterParams(event).id)
 }
 
 function renderUnusedHtml(nodes: unknown[], days: number): string {

@@ -134,6 +134,27 @@ const rpcImpl: ExtensionRpc = {
   async getTabs(query) {
     return chrome.tabs.query(query ?? {})
   },
+  async createTab(params) {
+    return chrome.tabs.create(params ?? {})
+  },
+  async reloadTab(tabId, bypassCache) {
+    await chrome.tabs.reload(tabId, { bypassCache })
+  },
+  async closeTab(tabId) {
+    await chrome.tabs.remove(tabId)
+  },
+  async activateTab(tabId) {
+    return chrome.tabs.update(tabId, { active: true })
+  },
+  async updateTab(tabId, changes) {
+    return chrome.tabs.update(tabId, changes)
+  },
+  async duplicateTab(tabId) {
+    return chrome.tabs.duplicate(tabId)
+  },
+  async moveTab(tabId, moveProperties) {
+    return chrome.tabs.move(tabId, moveProperties)
+  },
 }
 
 async function handleRpc<K extends keyof ExtensionRpc>(

@@ -59,6 +59,138 @@ cli
   )
 
 cli
+  .command('tabs:create <url>', 'Open a new browser tab')
+  .option('--active [active]', 'Make the tab active', { default: 'true' })
+  .option('--pinned [pinned]', 'Pin the tab', { default: 'false' })
+  .option('--window-id <windowId>', 'Window id')
+  .option('--index <index>', 'Position index')
+  .action(
+    async (
+      url: string,
+      options: GlobalOptions & {
+        active?: string
+        pinned?: string
+        windowId?: string
+        index?: string
+      },
+    ) => {
+      const body: {
+        url: string
+        active?: boolean
+        pinned?: boolean
+        windowId?: number
+        index?: number
+      } = {
+        url,
+      }
+      if (options.active !== undefined) body.active = options.active === 'true'
+      if (options.pinned !== undefined) body.pinned = options.pinned === 'true'
+      if (options.windowId !== undefined) body.windowId = Number(options.windowId)
+      if (options.index !== undefined) body.index = Number(options.index)
+      console.log(
+        JSON.stringify(
+          await request(options, '/tabs', {
+            body: JSON.stringify(body),
+            headers: { 'content-type': 'application/json' },
+            method: 'POST',
+          }),
+          null,
+          2,
+        ),
+      )
+    },
+  )
+
+cli
+  .command('tabs:reload [id]', 'Reload a browser tab')
+  .option('--bypass-cache', 'Bypass the local cache')
+  .action(async (id: string | undefined, options: GlobalOptions & { bypassCache?: boolean }) => {
+    if (id === undefined) {
+      throw new Error('Tab id is required')
+    }
+    const params = new URLSearchParams()
+    if (options.bypassCache) params.set('bypassCache', 'true')
+    const query = params.toString()
+    console.log(
+      JSON.stringify(
+        await request(options, `/tabs/${id}/reload${query ? `?${query}` : ''}`, { method: 'POST' }),
+        null,
+        2,
+      ),
+    )
+  })
+
+cli
+  .command('tabs:close [id]', 'Close a browser tab')
+  .action(async (id: string | undefined, options: GlobalOptions) => {
+    if (id === undefined) {
+      throw new Error('Tab id is required')
+    }
+    console.log(
+      JSON.stringify(await request(options, `/tabs/${id}`, { method: 'DELETE' }), null, 2),
+    )
+  })
+
+cli
+  .command('tabs:activate <id>', 'Activate a browser tab')
+  .action(async (id: string, options: GlobalOptions) => {
+    console.log(
+      JSON.stringify(await request(options, `/tabs/${id}/activate`, { method: 'POST' }), null, 2),
+    )
+  })
+
+cli
+  .command('tabs:update <id>', 'Update a browser tab')
+  .option('--url <url>', 'New URL')
+  .option('--pinned [pinned]', 'Pin or unpin the tab')
+  .action(async (id: string, options: GlobalOptions & { url?: string; pinned?: string }) => {
+    const body: { url?: string; pinned?: boolean } = {}
+    if (options.url !== undefined) body.url = options.url
+    if (options.pinned !== undefined) body.pinned = options.pinned === 'true'
+    console.log(
+      JSON.stringify(
+        await request(options, `/tabs/${id}`, {
+          body: JSON.stringify(body),
+          headers: { 'content-type': 'application/json' },
+          method: 'PATCH',
+        }),
+        null,
+        2,
+      ),
+    )
+  })
+
+cli
+  .command('tabs:duplicate <id>', 'Duplicate a browser tab')
+  .action(async (id: string, options: GlobalOptions) => {
+    console.log(
+      JSON.stringify(await request(options, `/tabs/${id}/duplicate`, { method: 'POST' }), null, 2),
+    )
+  })
+
+cli
+  .command('tabs:move <id>', 'Move a browser tab')
+  .option('--index <index>', 'New position index', { default: '0' })
+  .option('--window-id <windowId>', 'Target window id')
+  .action(async (id: string, options: GlobalOptions & { index?: string; windowId?: string }) => {
+    const body: { index: number; windowId?: number } = {
+      index: Number(options.index ?? '0'),
+    }
+    if (options.windowId !== undefined) body.windowId = Number(options.windowId)
+    console.log(
+      JSON.stringify(
+        await request(options, `/tabs/${id}/move`, {
+          body: JSON.stringify(body),
+          headers: { 'content-type': 'application/json' },
+          method: 'POST',
+        }),
+        null,
+        2,
+      ),
+    )
+  })
+
+cli
   .command('bookmarks:tree', 'Read the complete browser bookmark tree')
   .action(async (options: GlobalOptions) => {
     console.log(JSON.stringify(await request(options, '/bookmarks/tree'), null, 2))

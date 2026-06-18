@@ -45,6 +45,13 @@ Usage:
 Commands:
   health                      Check daemon and extension status
   tabs                        List open browser tabs
+  tabs:create <url>           Open a new browser tab
+  tabs:reload [id]            Reload a browser tab
+  tabs:close [id]             Close a browser tab
+  tabs:activate <id>          Activate a browser tab
+  tabs:update <id>            Update a browser tab
+  tabs:duplicate <id>         Duplicate a browser tab
+  tabs:move <id>              Move a browser tab
   bookmarks:tree              Read the complete browser bookmark tree
   bookmarks:folders           List all bookmark folders
   bookmarks:search <query>    Search browser bookmarks
@@ -62,6 +69,13 @@ Commands:
 For more info, run any command with the `--help` flag:
   $ bb health --help
   $ bb tabs --help
+  $ bb tabs:create --help
+  $ bb tabs:reload --help
+  $ bb tabs:close --help
+  $ bb tabs:activate --help
+  $ bb tabs:update --help
+  $ bb tabs:duplicate --help
+  $ bb tabs:move --help
   $ bb bookmarks:tree --help
   $ bb bookmarks:folders --help
   $ bb bookmarks:search --help
@@ -136,6 +150,35 @@ $ bb bookmarks:remove-tree 123
 # Remove a folder tree by path
 $ bb bookmarks:remove-tree --path Archive/Old
 ```
+
+## Tabs
+
+List open tabs:
+
+```bash
+$ bb tabs
+```
+
+Open, close, reload, activate, update, duplicate, or move tabs:
+
+```bash
+$ bb tabs:create https://vitejs.dev
+$ bb tabs:reload 123
+$ bb tabs:close 123
+$ bb tabs:activate 123
+$ bb tabs:update 123 --url https://example.com
+$ bb tabs:duplicate 123
+$ bb tabs:move 123 --index 0
+```
+
+## TODO
+
+- [ ] `tabs:mute` / `tabs:unmute`
+- [ ] `tabs:pin` / `tabs:unpin`
+- [ ] `tabs:screenshot` (captureVisibleTab)
+- [ ] `tabs:detect-language`
+- [ ] `tabs:execute-script`
+- [ ] Real-time tab events via WebSocket (onCreated/onRemoved/onActivated)
 
 ## License
 

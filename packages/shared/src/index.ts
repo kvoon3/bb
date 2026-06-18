@@ -27,6 +27,13 @@ export interface ExtensionRpc {
   removeTree(id: string): Promise<void>
   removeByPath(path: string): Promise<void>
   getTabs(query?: tabs.QueryInfo): Promise<tabs.Tab[]>
+  createTab(params?: tabs.CreateProperties): Promise<tabs.Tab | undefined>
+  reloadTab(tabId: number, bypassCache?: boolean): Promise<void>
+  closeTab(tabId: number): Promise<void>
+  activateTab(tabId: number): Promise<tabs.Tab | undefined>
+  updateTab(tabId: number, changes: tabs.UpdateProperties): Promise<tabs.Tab | undefined>
+  duplicateTab(tabId: number): Promise<tabs.Tab | undefined>
+  moveTab(tabId: number, moveProperties: tabs.MoveProperties): Promise<tabs.Tab | undefined>
 }
 
 export function getFoldersFromTree(
