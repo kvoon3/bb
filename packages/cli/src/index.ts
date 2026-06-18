@@ -35,6 +35,30 @@ cli
   })
 
 cli
+  .command('tabs', 'List open browser tabs')
+  .option('--active [active]', 'Filter by active state (true/false)')
+  .option('--current-window [currentWindow]', 'Filter by current window (true/false)')
+  .option('--window-id <windowId>', 'Filter by window id')
+  .action(
+    async (
+      options: GlobalOptions & {
+        active?: string
+        currentWindow?: string
+        windowId?: string
+      },
+    ) => {
+      const params = new URLSearchParams()
+      if (options.active !== undefined) params.set('active', options.active)
+      if (options.currentWindow !== undefined) params.set('currentWindow', options.currentWindow)
+      if (options.windowId !== undefined) params.set('windowId', options.windowId)
+      const query = params.toString()
+      console.log(
+        JSON.stringify(await request(options, `/tabs${query ? `?${query}` : ''}`), null, 2),
+      )
+    },
+  )
+
+cli
   .command('bookmarks:tree', 'Read the complete browser bookmark tree')
   .action(async (options: GlobalOptions) => {
     console.log(JSON.stringify(await request(options, '/bookmarks/tree'), null, 2))

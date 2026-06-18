@@ -72,6 +72,18 @@ export function createAppRouter(onShutdown?: () => void) {
   )
 
   router.get(
+    '/tabs',
+    defineEventHandler(async (event) => {
+      const query = getQuery(event)
+      const active = query.active === 'true' ? true : query.active === 'false' ? false : undefined
+      const currentWindow =
+        query.currentWindow === 'true' ? true : query.currentWindow === 'false' ? false : undefined
+      const windowId = query.windowId ? Number(query.windowId) : undefined
+      return requireRpc().getTabs({ active, currentWindow, windowId })
+    }),
+  )
+
+  router.get(
     '/bookmarks/tree',
     defineEventHandler(async () => {
       return requireRpc().getTree()

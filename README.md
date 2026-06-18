@@ -44,6 +44,7 @@ Usage:
 
 Commands:
   health                      Check daemon and extension status
+  tabs                        List open browser tabs
   bookmarks:tree              Read the complete browser bookmark tree
   bookmarks:folders           List all bookmark folders
   bookmarks:search <query>    Search browser bookmarks
@@ -60,6 +61,7 @@ Commands:
 
 For more info, run any command with the `--help` flag:
   $ bb health --help
+  $ bb tabs --help
   $ bb bookmarks:tree --help
   $ bb bookmarks:folders --help
   $ bb bookmarks:search --help

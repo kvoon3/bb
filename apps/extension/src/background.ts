@@ -131,6 +131,9 @@ const rpcImpl: ExtensionRpc = {
     }
     await chrome.bookmarks.removeTree(node.id)
   },
+  async getTabs(query) {
+    return chrome.tabs.query(query ?? {})
+  },
 }
 
 async function handleRpc<K extends keyof ExtensionRpc>(

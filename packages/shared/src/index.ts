@@ -23,6 +23,25 @@ export interface MoveByPathItem {
   index?: number
 }
 
+export interface Tab {
+  id?: number
+  index: number
+  windowId?: number
+  groupId?: number
+  active: boolean
+  highlighted: boolean
+  pinned: boolean
+  audible?: boolean
+  discarded: boolean
+  autoDiscardable: boolean
+  mutedInfo?: { muted: boolean }
+  url?: string
+  title?: string
+  favIconUrl?: string
+  status?: string
+  incognito: boolean
+}
+
 export interface ExtensionRpc {
   getTree(): Promise<BookmarkNode[]>
   getFolders(): Promise<BookmarkNode[]>
@@ -42,6 +61,7 @@ export interface ExtensionRpc {
   remove(id: string): Promise<void>
   removeTree(id: string): Promise<void>
   removeByPath(path: string): Promise<void>
+  getTabs(query?: { active?: boolean; currentWindow?: boolean; windowId?: number }): Promise<Tab[]>
 }
 
 export function getFoldersFromTree(nodes: BookmarkNode[]): BookmarkNode[] {

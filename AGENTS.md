@@ -9,6 +9,10 @@
 
 When creating or updating agent skills for this project, follow the guidelines in [`docs/skills-generater.md`](docs/skills-generater.md).
 
+## Extension Reload Rule
+
+After modifying `apps/extension/src/*`, build the extension and manually reload it in the browser before testing. MV3 service workers do not pick up code changes automatically.
+
 <!--VITE PLUS START-->
 
 # Using Vite+, the Unified Toolchain for the Web

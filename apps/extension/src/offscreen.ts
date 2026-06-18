@@ -79,6 +79,9 @@ function connect() {
       removeByPath(path) {
         return callBackground('removeByPath', path)
       },
+      getTabs(query) {
+        return callBackground('getTabs', query)
+      },
     },
     {
       post(data) {
