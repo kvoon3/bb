@@ -7,7 +7,7 @@
   <a href="https://github.com/kvoon3/bb/blob/main/LICENSE"><img src="https://img.shields.io/github/license/kvoon3/bb.svg?style=flat&colorA=080f12&colorB=1fa669&logo=github" alt="License"></a>
 </p>
 
-<p align="center">Let your local agent control your browser bookmarks.</p>
+<p align="center">Let your local agent manage your browser bookmarks/tabs.</p>
 
 ```text
 AI Agent -> CLI -> localhost daemon <-> browser extension -> bookmarks API
