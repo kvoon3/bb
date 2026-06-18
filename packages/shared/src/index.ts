@@ -1,21 +1,10 @@
+export * from './types/index.js'
+
+import type { bookmarks, tabs } from './types/index.js'
+
 export const DEFAULT_DAEMON_HOST = '127.0.0.1'
 export const DEFAULT_DAEMON_PORT = 31337
 export const EXTENSION_WS_PATH = '/extension'
-
-export type BookmarkNode = {
-  id: string
-  parentId?: string
-  index?: number
-  url?: string
-  title: string
-  dateAdded?: number
-  dateGroupModified?: number
-  dateLastUsed?: number
-  unmodifiable?: 'managed'
-  syncing: boolean
-  folderType?: 'bookmarks-bar' | 'other' | 'mobile' | 'managed'
-  children?: BookmarkNode[]
-}
 
 export interface MoveByPathItem {
   id: string
@@ -23,51 +12,29 @@ export interface MoveByPathItem {
   index?: number
 }
 
-export interface Tab {
-  id?: number
-  index: number
-  windowId?: number
-  groupId?: number
-  active: boolean
-  highlighted: boolean
-  pinned: boolean
-  audible?: boolean
-  discarded: boolean
-  autoDiscardable: boolean
-  mutedInfo?: { muted: boolean }
-  url?: string
-  title?: string
-  favIconUrl?: string
-  status?: string
-  incognito: boolean
-}
-
 export interface ExtensionRpc {
-  getTree(): Promise<BookmarkNode[]>
-  getFolders(): Promise<BookmarkNode[]>
-  search(query: string): Promise<BookmarkNode[]>
-  get(id: string): Promise<BookmarkNode[]>
-  getChildren(id: string): Promise<BookmarkNode[]>
-  create(params: {
-    parentId?: string
-    title?: string
-    url?: string
-    index?: number
-  }): Promise<BookmarkNode>
-  update(id: string, changes: { title?: string; url?: string }): Promise<BookmarkNode>
-  move(id: string, changes: { parentId?: string; index?: number }): Promise<BookmarkNode>
-  moveByPath(id: string, path: string, index?: number): Promise<BookmarkNode>
-  moveByPathBatch(items: MoveByPathItem[]): Promise<BookmarkNode[]>
+  getTree(): Promise<bookmarks.BookmarkTreeNode[]>
+  getFolders(): Promise<bookmarks.BookmarkTreeNode[]>
+  search(query: string | bookmarks.SearchQuery): Promise<bookmarks.BookmarkTreeNode[]>
+  get(id: string): Promise<bookmarks.BookmarkTreeNode[]>
+  getChildren(id: string): Promise<bookmarks.BookmarkTreeNode[]>
+  create(params: bookmarks.CreateDetails): Promise<bookmarks.BookmarkTreeNode>
+  update(id: string, changes: bookmarks.UpdateChanges): Promise<bookmarks.BookmarkTreeNode>
+  move(id: string, changes: bookmarks.MoveDestination): Promise<bookmarks.BookmarkTreeNode>
+  moveByPath(id: string, path: string, index?: number): Promise<bookmarks.BookmarkTreeNode>
+  moveByPathBatch(items: MoveByPathItem[]): Promise<bookmarks.BookmarkTreeNode[]>
   remove(id: string): Promise<void>
   removeTree(id: string): Promise<void>
   removeByPath(path: string): Promise<void>
-  getTabs(query?: { active?: boolean; currentWindow?: boolean; windowId?: number }): Promise<Tab[]>
+  getTabs(query?: tabs.QueryInfo): Promise<tabs.Tab[]>
 }
 
-export function getFoldersFromTree(nodes: BookmarkNode[]): BookmarkNode[] {
-  const folders: BookmarkNode[] = []
+export function getFoldersFromTree(
+  nodes: bookmarks.BookmarkTreeNode[],
+): bookmarks.BookmarkTreeNode[] {
+  const folders: bookmarks.BookmarkTreeNode[] = []
 
-  function walk(items: BookmarkNode[]) {
+  function walk(items: bookmarks.BookmarkTreeNode[]) {
     for (const node of items) {
       if (node.url === undefined) {
         folders.push(node)
@@ -82,14 +49,17 @@ export function getFoldersFromTree(nodes: BookmarkNode[]): BookmarkNode[] {
   return folders
 }
 
-export function findNodeByPath(tree: BookmarkNode[], path: string): BookmarkNode | undefined {
+export function findNodeByPath(
+  tree: bookmarks.BookmarkTreeNode[],
+  path: string,
+): bookmarks.BookmarkTreeNode | undefined {
   const segments = path.split('/').filter(Boolean)
   const root = tree[0]?.children?.[0]
   if (!root) {
     return undefined
   }
 
-  let current: BookmarkNode = root
+  let current: bookmarks.BookmarkTreeNode = root
   for (const segment of segments) {
     const child = current.children?.find((node) => node.title === segment && node.url === undefined)
     if (!child) {
@@ -101,17 +71,20 @@ export function findNodeByPath(tree: BookmarkNode[], path: string): BookmarkNode
 }
 
 export async function ensurePath(
-  tree: BookmarkNode[],
+  tree: bookmarks.BookmarkTreeNode[],
   path: string,
-  createFolder: (params: { parentId: string; title: string }) => Promise<BookmarkNode>,
-): Promise<BookmarkNode> {
+  createFolder: (params: {
+    parentId: string
+    title: string
+  }) => Promise<bookmarks.BookmarkTreeNode>,
+): Promise<bookmarks.BookmarkTreeNode> {
   const segments = path.split('/').filter(Boolean)
   const root = tree[0]?.children?.[0]
   if (!root) {
     throw new Error('Could not find bookmark root')
   }
 
-  let current: BookmarkNode = root
+  let current: bookmarks.BookmarkTreeNode = root
   let parentId = root.id
 
   for (const segment of segments) {

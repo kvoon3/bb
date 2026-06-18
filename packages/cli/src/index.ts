@@ -7,7 +7,7 @@ import {
   DEFAULT_DAEMON_PORT,
   errorMessage,
   findNodeByPath,
-  type BookmarkNode,
+  type bookmarks,
 } from '@bb/shared'
 import { cac } from 'cac'
 
@@ -483,7 +483,7 @@ cli
         throw new Error('At least one --rule is required')
       }
 
-      const tree = (await request(options, '/bookmarks/tree')) as BookmarkNode[]
+      const tree = (await request(options, '/bookmarks/tree')) as bookmarks.BookmarkTreeNode[]
       const source = findNodeByPath(tree, path)
       if (!source) {
         throw new Error(`Folder not found: ${path}`)
@@ -543,7 +543,7 @@ cli
             body: JSON.stringify({ title: segment, parentId }),
             headers: { 'content-type': 'application/json' },
             method: 'POST',
-          })) as BookmarkNode
+          })) as bookmarks.BookmarkTreeNode
           folderIds.set(currentPath, created.id)
           parentId = created.id
         }

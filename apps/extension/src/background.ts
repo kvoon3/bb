@@ -1,8 +1,8 @@
 import {
   DEFAULT_DAEMON_HOST,
   DEFAULT_DAEMON_PORT,
-  type BookmarkNode,
   type ExtensionRpc,
+  type bookmarks,
   findNodeByPath,
   ensurePath,
   getFoldersFromTree,
@@ -108,7 +108,7 @@ const rpcImpl: ExtensionRpc = {
     const tree = await chrome.bookmarks.getTree()
     const createFolder = async (params: { parentId: string; title: string }) =>
       chrome.bookmarks.create(params)
-    const moved: BookmarkNode[] = []
+    const moved: bookmarks.BookmarkTreeNode[] = []
     for (const item of items) {
       const target = await ensurePath(tree, item.path, createFolder)
       const moveOptions: { parentId: string; index?: number } = { parentId: target.id }

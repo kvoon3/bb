@@ -1,4 +1,4 @@
-import type { BookmarkNode } from '@bb/shared'
+import type { bookmarks } from '@bb/shared'
 import picomatch from 'picomatch'
 
 export function normalizeRules(input: string | string[] | undefined): Array<{
@@ -31,7 +31,7 @@ export function parseRule(rule: string): {
 
 export function matchRule(
   rules: Array<{ field: 'url' | 'title'; pattern: string; target: string }>,
-  bookmark: BookmarkNode,
+  bookmark: bookmarks.BookmarkTreeNode,
 ): string | undefined {
   for (const rule of rules) {
     const value = rule.field === 'url' ? bookmark.url : bookmark.title

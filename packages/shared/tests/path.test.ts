@@ -1,7 +1,7 @@
 import { expect, test, vi } from 'vite-plus/test'
 
 import { ensurePath, findNodeByPath, getFoldersFromTree } from '../src/index.ts'
-import type { BookmarkNode } from '../src/index.ts'
+import type { bookmarks } from '../src/index.ts'
 
 type NodeParams = {
   id: string
@@ -10,7 +10,7 @@ type NodeParams = {
   children?: NodeParams[]
 }
 
-function makeNode(node: NodeParams): BookmarkNode {
+function makeNode(node: NodeParams): bookmarks.BookmarkTreeNode {
   return {
     ...node,
     syncing: false,
@@ -18,7 +18,7 @@ function makeNode(node: NodeParams): BookmarkNode {
   }
 }
 
-function makeTree(rootChildren: NodeParams[] = []): BookmarkNode[] {
+function makeTree(rootChildren: NodeParams[] = []): bookmarks.BookmarkTreeNode[] {
   return [
     makeNode({
       id: '0',
