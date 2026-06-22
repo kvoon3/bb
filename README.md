@@ -43,29 +43,35 @@ Usage:
   $ bb <command> [options]
 
 Commands:
-  health                      Check daemon and extension status
-  tabs                        List open browser tabs
-  tabs:create <url>           Open a new browser tab
-  tabs:reload [id]            Reload a browser tab
-  tabs:close [id]             Close a browser tab
-  tabs:activate <id>          Activate a browser tab
-  tabs:update <id>            Update a browser tab
-  tabs:duplicate <id>         Duplicate a browser tab
-  tabs:move <id>              Move a browser tab
-  bookmarks:tree              Read the complete browser bookmark tree
-  bookmarks:folders           List all bookmark folders
-  bookmarks:search <query>    Search browser bookmarks
-  bookmarks:get <id>          Read one browser bookmark node by id
-  bookmarks:children <id>     List children of a bookmark folder
-  bookmarks:create            Create one or more bookmarks or folders
-  bookmarks:update [id]       Update one or more bookmark titles or URLs
-  bookmarks:move [id]         Move one or more bookmarks to another folder or position
-  bookmarks:remove [id]       Remove one or more bookmarks or empty folders
-  bookmarks:remove-tree [id]  Recursively remove a bookmark folder tree
-  bookmarks:unused            List bookmarks not visited recently
-  bookmarks:organize <path>   Organize bookmarks in a folder by rules (rule targets are created as subfolders of <path>)
-  daemon                      Start the bb daemon in the foreground
-  daemon:stop                 Stop the running bb daemon
+  health                        Check daemon and extension status
+  tabs                          List open browser tabs
+  tabs:create <url>             Open a new browser tab
+  tabs:reload [id]              Reload a browser tab
+  tabs:close [id]               Close a browser tab
+  tabs:activate <id>            Activate a browser tab
+  tabs:update <id>              Update a browser tab
+  tabs:duplicate <id>           Duplicate a browser tab
+  tabs:move <id>                Move a browser tab
+  tabs:groups                   List tab groups
+  tabs:group                    Group one or more tabs
+  tabs:ungroup                  Ungroup one or more tabs
+  tabs:groups:update <groupId>  Update a tab group
+  tabs:groups:move <groupId>    Move a tab group
+  tabs:groups:remove <groupId>  Ungroup all tabs in a tab group
+  bookmarks:tree                Read the complete browser bookmark tree
+  bookmarks:folders             List all bookmark folders
+  bookmarks:search <query>      Search browser bookmarks
+  bookmarks:get <id>            Read one browser bookmark node by id
+  bookmarks:children <id>       List children of a bookmark folder
+  bookmarks:create              Create one or more bookmarks or folders
+  bookmarks:update [id]         Update one or more bookmark titles or URLs
+  bookmarks:move [id]           Move one or more bookmarks to another folder or position
+  bookmarks:remove [id]         Remove one or more bookmarks or empty folders
+  bookmarks:remove-tree [id]    Recursively remove a bookmark folder tree
+  bookmarks:unused              List bookmarks not visited recently
+  bookmarks:organize <path>     Organize bookmarks in a folder by rules (rule targets are created as subfolders of <path>)
+  daemon                        Start the bb daemon in the foreground
+  daemon:stop                   Stop the running bb daemon
 
 For more info, run any command with the `--help` flag:
   $ bb health --help
@@ -77,6 +83,12 @@ For more info, run any command with the `--help` flag:
   $ bb tabs:update --help
   $ bb tabs:duplicate --help
   $ bb tabs:move --help
+  $ bb tabs:groups --help
+  $ bb tabs:group --help
+  $ bb tabs:ungroup --help
+  $ bb tabs:groups:update --help
+  $ bb tabs:groups:move --help
+  $ bb tabs:groups:remove --help
   $ bb bookmarks:tree --help
   $ bb bookmarks:folders --help
   $ bb bookmarks:search --help
@@ -173,14 +185,34 @@ $ bb tabs:duplicate 123
 $ bb tabs:move 123 --index 0
 ```
 
-## TODO
+## Tab Groups
 
-- [ ] `tabs:mute` / `tabs:unmute`
-- [ ] `tabs:pin` / `tabs:unpin`
-- [ ] `tabs:screenshot` (captureVisibleTab)
-- [ ] `tabs:detect-language`
-- [ ] `tabs:execute-script`
-- [ ] Real-time tab events via WebSocket (onCreated/onRemoved/onActivated)
+List tab groups:
+
+```bash
+$ bb tabs:groups
+```
+
+Group tabs and optionally set title, color, or collapsed state:
+
+```bash
+$ bb tabs:group --tab-ids 123,456 --title "Work" --color blue
+$ bb tabs:group --tab-ids 789 --group-id 1 --title "Archive"
+```
+
+Ungroup tabs or remove a whole group:
+
+```bash
+$ bb tabs:ungroup --tab-ids 123,456
+$ bb tabs:groups:remove 1
+```
+
+Update or move a group:
+
+```bash
+$ bb tabs:groups:update 1 --collapsed true
+$ bb tabs:groups:move 1 --index 0
+```
 
 ## License
 

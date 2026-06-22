@@ -103,6 +103,24 @@ function connect() {
       moveTab(tabId, moveProperties) {
         return callBackground('moveTab', tabId, moveProperties)
       },
+      getTabGroups(query) {
+        return callBackground('getTabGroups', query)
+      },
+      groupTabs(tabIds, groupId) {
+        return callBackground('groupTabs', tabIds, groupId)
+      },
+      ungroupTabs(tabIds) {
+        return callBackground('ungroupTabs', tabIds)
+      },
+      updateTabGroup(groupId, changes) {
+        return callBackground('updateTabGroup', groupId, changes)
+      },
+      moveTabGroup(groupId, moveProperties) {
+        return callBackground('moveTabGroup', groupId, moveProperties)
+      },
+      removeTabGroup(groupId) {
+        return callBackground('removeTabGroup', groupId)
+      },
     },
     {
       post(data) {

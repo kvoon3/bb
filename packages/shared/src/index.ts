@@ -1,6 +1,6 @@
 export * from './types/index.js'
 
-import type { bookmarks, tabs } from './types/index.js'
+import type { bookmarks, tabs, tabGroups } from './types/index.js'
 
 export const DEFAULT_DAEMON_HOST = '127.0.0.1'
 export const DEFAULT_DAEMON_PORT = 31337
@@ -34,6 +34,18 @@ export interface ExtensionRpc {
   updateTab(tabId: number, changes: tabs.UpdateProperties): Promise<tabs.Tab | undefined>
   duplicateTab(tabId: number): Promise<tabs.Tab | undefined>
   moveTab(tabId: number, moveProperties: tabs.MoveProperties): Promise<tabs.Tab | undefined>
+  getTabGroups(query?: tabGroups.QueryInfo): Promise<tabGroups.TabGroup[]>
+  groupTabs(tabIds: number[], groupId?: number): Promise<number>
+  ungroupTabs(tabIds: number[]): Promise<void>
+  updateTabGroup(
+    groupId: number,
+    changes: tabGroups.UpdateProperties,
+  ): Promise<tabGroups.TabGroup | undefined>
+  moveTabGroup(
+    groupId: number,
+    moveProperties: tabGroups.MoveProperties,
+  ): Promise<tabGroups.TabGroup | undefined>
+  removeTabGroup(groupId: number): Promise<void>
 }
 
 export function getFoldersFromTree(

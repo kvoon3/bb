@@ -3,6 +3,7 @@ import {
   DEFAULT_DAEMON_PORT,
   type ExtensionRpc,
   type bookmarks,
+  type tabGroups,
   findNodeByPath,
   ensurePath,
   getFoldersFromTree,
@@ -154,6 +155,31 @@ const rpcImpl: ExtensionRpc = {
   },
   async moveTab(tabId, moveProperties) {
     return chrome.tabs.move(tabId, moveProperties)
+  },
+  async getTabGroups(query) {
+    return chrome.tabGroups.query(query ?? {})
+  },
+  async groupTabs(tabIds, groupId) {
+    const options: chrome.tabs.GroupOptions = { tabIds: tabIds as [number, ...number[]] }
+    if (groupId !== undefined) options.groupId = groupId
+    else options.createProperties = {}
+    return chrome.tabs.group(options)
+  },
+  async ungroupTabs(tabIds) {
+    await chrome.tabs.ungroup(tabIds as [number, ...number[]])
+  },
+  async updateTabGroup(groupId, changes) {
+    return chrome.tabGroups.update(groupId, changes as tabGroups.UpdateProperties)
+  },
+  async moveTabGroup(groupId, moveProperties) {
+    return chrome.tabGroups.move(groupId, moveProperties)
+  },
+  async removeTabGroup(groupId) {
+    const tabs = await chrome.tabs.query({ groupId })
+    const tabIds = tabs.map((t) => t.id).filter((id): id is number => id !== undefined)
+    if (tabIds.length > 0) {
+      await chrome.tabs.ungroup(tabIds as [number, ...number[]])
+    }
   },
 }
 

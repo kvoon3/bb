@@ -1,4 +1,10 @@
-import { errorMessage, EXTENSION_WS_PATH, type ExtensionRpc, type MoveByPathItem } from '@bb/shared'
+import {
+  errorMessage,
+  EXTENSION_WS_PATH,
+  type ExtensionRpc,
+  type MoveByPathItem,
+  type tabGroups,
+} from '@bb/shared'
 import { createBirpc, type BirpcReturn } from 'birpc'
 import type { H3Event } from 'h3'
 import {
@@ -146,6 +152,85 @@ export function createAppRouter(onShutdown?: () => void) {
         windowId?: number
       }
       return requireRpc().moveTab(decodeTabId(event), moveProperties)
+    }),
+  )
+
+  router.get(
+    '/tabs/groups',
+    defineEventHandler(async (event) => {
+      const query = getQuery(event)
+      const collapsed =
+        query.collapsed === 'true' ? true : query.collapsed === 'false' ? false : undefined
+      const windowId = query.windowId ? Number(query.windowId) : undefined
+      const title = typeof query.title === 'string' ? query.title : undefined
+      const color =
+        typeof query.color === 'string' ? (query.color as `${tabGroups.Color}`) : undefined
+      return requireRpc().getTabGroups({ collapsed, windowId, title, color })
+    }),
+  )
+
+  router.post(
+    '/tabs/group',
+    defineEventHandler(async (event) => {
+      const body = (await readBody(event)) as {
+        tabIds: number[]
+        groupId?: number
+      }
+      if (!Array.isArray(body.tabIds) || body.tabIds.length === 0) {
+        throw createError({ statusCode: 400, statusMessage: 'tabIds array is required' })
+      }
+      return requireRpc().groupTabs(body.tabIds, body.groupId)
+    }),
+  )
+
+  router.post(
+    '/tabs/ungroup',
+    defineEventHandler(async (event) => {
+      const body = (await readBody(event)) as { tabIds: number[] }
+      if (!Array.isArray(body.tabIds) || body.tabIds.length === 0) {
+        throw createError({ statusCode: 400, statusMessage: 'tabIds array is required' })
+      }
+      await requireRpc().ungroupTabs(body.tabIds)
+      return { ok: true }
+    }),
+  )
+
+  router.patch(
+    '/tabs/groups/:id',
+    defineEventHandler(async (event) => {
+      const body = await readBody(event)
+      const { id: _ignored, ...rawChanges } = body as {
+        id?: unknown
+        collapsed?: boolean
+        title?: string
+        color?: string
+      }
+      const changes: tabGroups.UpdateProperties = {
+        ...rawChanges,
+        color: rawChanges.color as `${tabGroups.Color}` | undefined,
+      }
+      return requireRpc().updateTabGroup(decodeGroupId(event), changes)
+    }),
+  )
+
+  router.post(
+    '/tabs/groups/:id/move',
+    defineEventHandler(async (event) => {
+      const body = await readBody(event)
+      const { id: _ignored, ...moveProperties } = body as {
+        id?: unknown
+        index: number
+        windowId?: number
+      }
+      return requireRpc().moveTabGroup(decodeGroupId(event), moveProperties)
+    }),
+  )
+
+  router.delete(
+    '/tabs/groups/:id',
+    defineEventHandler(async (event) => {
+      await requireRpc().removeTabGroup(decodeGroupId(event))
+      return { ok: true }
     }),
   )
 
@@ -310,6 +395,10 @@ function decodeId(event: H3Event): string {
 }
 
 function decodeTabId(event: H3Event): number {
+  return Number(getRouterParams(event).id)
+}
+
+function decodeGroupId(event: H3Event): number {
   return Number(getRouterParams(event).id)
 }
 

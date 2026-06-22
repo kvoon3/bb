@@ -23,6 +23,13 @@ type GlobalOptions = {
   json?: boolean
 }
 
+function isTruthy(value: string | boolean | undefined): boolean | undefined {
+  if (value === undefined) return undefined
+  if (value === true) return true
+  if (value === false) return false
+  return value === 'true'
+}
+
 cli
   .option('--host <host>', 'Daemon host', { default: DEFAULT_DAEMON_HOST })
   .option('--port <port>', 'Daemon port', { default: String(DEFAULT_DAEMON_PORT) })
@@ -42,14 +49,15 @@ cli
   .action(
     async (
       options: GlobalOptions & {
-        active?: string
-        currentWindow?: string
+        active?: string | boolean
+        currentWindow?: string | boolean
         windowId?: string
       },
     ) => {
       const params = new URLSearchParams()
-      if (options.active !== undefined) params.set('active', options.active)
-      if (options.currentWindow !== undefined) params.set('currentWindow', options.currentWindow)
+      if (options.active !== undefined) params.set('active', String(options.active))
+      if (options.currentWindow !== undefined)
+        params.set('currentWindow', String(options.currentWindow))
       if (options.windowId !== undefined) params.set('windowId', options.windowId)
       const query = params.toString()
       console.log(
@@ -68,8 +76,8 @@ cli
     async (
       url: string,
       options: GlobalOptions & {
-        active?: string
-        pinned?: string
+        active?: string | boolean
+        pinned?: string | boolean
         windowId?: string
         index?: string
       },
@@ -83,8 +91,8 @@ cli
       } = {
         url,
       }
-      if (options.active !== undefined) body.active = options.active === 'true'
-      if (options.pinned !== undefined) body.pinned = options.pinned === 'true'
+      if (options.active !== undefined) body.active = isTruthy(options.active)
+      if (options.pinned !== undefined) body.pinned = isTruthy(options.pinned)
       if (options.windowId !== undefined) body.windowId = Number(options.windowId)
       if (options.index !== undefined) body.index = Number(options.index)
       console.log(
@@ -143,22 +151,24 @@ cli
   .command('tabs:update <id>', 'Update a browser tab')
   .option('--url <url>', 'New URL')
   .option('--pinned [pinned]', 'Pin or unpin the tab')
-  .action(async (id: string, options: GlobalOptions & { url?: string; pinned?: string }) => {
-    const body: { url?: string; pinned?: boolean } = {}
-    if (options.url !== undefined) body.url = options.url
-    if (options.pinned !== undefined) body.pinned = options.pinned === 'true'
-    console.log(
-      JSON.stringify(
-        await request(options, `/tabs/${id}`, {
-          body: JSON.stringify(body),
-          headers: { 'content-type': 'application/json' },
-          method: 'PATCH',
-        }),
-        null,
-        2,
-      ),
-    )
-  })
+  .action(
+    async (id: string, options: GlobalOptions & { url?: string; pinned?: string | boolean }) => {
+      const body: { url?: string; pinned?: boolean } = {}
+      if (options.url !== undefined) body.url = options.url
+      if (options.pinned !== undefined) body.pinned = isTruthy(options.pinned)
+      console.log(
+        JSON.stringify(
+          await request(options, `/tabs/${id}`, {
+            body: JSON.stringify(body),
+            headers: { 'content-type': 'application/json' },
+            method: 'PATCH',
+          }),
+          null,
+          2,
+        ),
+      )
+    },
+  )
 
 cli
   .command('tabs:duplicate <id>', 'Duplicate a browser tab')
@@ -184,6 +194,189 @@ cli
           headers: { 'content-type': 'application/json' },
           method: 'POST',
         }),
+        null,
+        2,
+      ),
+    )
+  })
+
+cli
+  .command('tabs:groups', 'List tab groups')
+  .option('--collapsed [collapsed]', 'Filter by collapsed state (true/false)')
+  .option('--window-id <windowId>', 'Filter by window id')
+  .option('--title <title>', 'Filter by title')
+  .option('--color <color>', 'Filter by color')
+  .action(
+    async (
+      options: GlobalOptions & {
+        collapsed?: string | boolean
+        windowId?: string
+        title?: string
+        color?: string
+      },
+    ) => {
+      const params = new URLSearchParams()
+      if (options.collapsed !== undefined) params.set('collapsed', String(options.collapsed))
+      if (options.windowId !== undefined) params.set('windowId', options.windowId)
+      if (options.title !== undefined) params.set('title', options.title)
+      if (options.color !== undefined) params.set('color', options.color)
+      const query = params.toString()
+      console.log(
+        JSON.stringify(await request(options, `/tabs/groups${query ? `?${query}` : ''}`), null, 2),
+      )
+    },
+  )
+
+cli
+  .command('tabs:group', 'Group one or more tabs')
+  .option('--tab-ids <tabIds>', 'Comma-separated tab ids to group', { default: '' })
+  .option('--group-id <groupId>', 'Add tabs to an existing group')
+  .option('--title <title>', 'Group title')
+  .option(
+    '--color <color>',
+    'Group color (grey, blue, red, yellow, green, pink, purple, cyan, orange)',
+  )
+  .option('--collapsed [collapsed]', 'Collapse the group (true/false)')
+  .action(
+    async (
+      options: GlobalOptions & {
+        tabIds?: string
+        groupId?: string
+        title?: string
+        color?: string
+        collapsed?: string | boolean
+      },
+    ) => {
+      const tabIds = String(options.tabIds ?? '')
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .map(Number)
+      if (tabIds.length === 0) {
+        throw new Error('At least one tab id is required (--tab-ids)')
+      }
+
+      const existingGroupId = options.groupId !== undefined ? Number(options.groupId) : undefined
+      const newGroupId = (await request(options, '/tabs/group', {
+        body: JSON.stringify({ tabIds, groupId: existingGroupId }),
+        headers: { 'content-type': 'application/json' },
+        method: 'POST',
+      })) as number
+
+      const changes: { title?: string; color?: string; collapsed?: boolean } = {}
+      if (options.title !== undefined) changes.title = options.title
+      if (options.color !== undefined) changes.color = options.color
+      if (options.collapsed !== undefined) changes.collapsed = isTruthy(options.collapsed)
+
+      if (Object.keys(changes).length > 0) {
+        console.log(
+          JSON.stringify(
+            await request(options, `/tabs/groups/${newGroupId}`, {
+              body: JSON.stringify(changes),
+              headers: { 'content-type': 'application/json' },
+              method: 'PATCH',
+            }),
+            null,
+            2,
+          ),
+        )
+        return
+      }
+
+      console.log(JSON.stringify({ groupId: newGroupId }, null, 2))
+    },
+  )
+
+cli
+  .command('tabs:ungroup', 'Ungroup one or more tabs')
+  .option('--tab-ids <tabIds>', 'Comma-separated tab ids to ungroup', { default: '' })
+  .action(async (options: GlobalOptions & { tabIds?: string }) => {
+    const tabIds = String(options.tabIds ?? '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean)
+      .map(Number)
+    if (tabIds.length === 0) {
+      throw new Error('At least one tab id is required (--tab-ids)')
+    }
+    console.log(
+      JSON.stringify(
+        await request(options, '/tabs/ungroup', {
+          body: JSON.stringify({ tabIds }),
+          headers: { 'content-type': 'application/json' },
+          method: 'POST',
+        }),
+        null,
+        2,
+      ),
+    )
+  })
+
+cli
+  .command('tabs:groups:update <groupId>', 'Update a tab group')
+  .option('--title <title>', 'Group title')
+  .option(
+    '--color <color>',
+    'Group color (grey, blue, red, yellow, green, pink, purple, cyan, orange)',
+  )
+  .option('--collapsed [collapsed]', 'Collapse the group (true/false)')
+  .action(
+    async (
+      groupId: string,
+      options: GlobalOptions & {
+        title?: string
+        color?: string
+        collapsed?: string | boolean
+      },
+    ) => {
+      const body: { title?: string; color?: string; collapsed?: boolean } = {}
+      if (options.title !== undefined) body.title = options.title
+      if (options.color !== undefined) body.color = options.color
+      if (options.collapsed !== undefined) body.collapsed = isTruthy(options.collapsed)
+      console.log(
+        JSON.stringify(
+          await request(options, `/tabs/groups/${groupId}`, {
+            body: JSON.stringify(body),
+            headers: { 'content-type': 'application/json' },
+            method: 'PATCH',
+          }),
+          null,
+          2,
+        ),
+      )
+    },
+  )
+
+cli
+  .command('tabs:groups:move <groupId>', 'Move a tab group')
+  .option('--index <index>', 'New position index', { default: '0' })
+  .option('--window-id <windowId>', 'Target window id')
+  .action(
+    async (groupId: string, options: GlobalOptions & { index?: string; windowId?: string }) => {
+      const body: { index: number; windowId?: number } = {
+        index: Number(options.index ?? '0'),
+      }
+      if (options.windowId !== undefined) body.windowId = Number(options.windowId)
+      console.log(
+        JSON.stringify(
+          await request(options, `/tabs/groups/${groupId}/move`, {
+            body: JSON.stringify(body),
+            headers: { 'content-type': 'application/json' },
+            method: 'POST',
+          }),
+          null,
+          2,
+        ),
+      )
+    },
+  )
+
+cli
+  .command('tabs:groups:remove <groupId>', 'Ungroup all tabs in a tab group')
+  .action(async (groupId: string, options: GlobalOptions) => {
+    console.log(
+      JSON.stringify(
+        await request(options, `/tabs/groups/${groupId}`, { method: 'DELETE' }),
         null,
         2,
       ),

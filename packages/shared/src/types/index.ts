@@ -355,3 +355,72 @@ export namespace tabs {
     index: number
   }
 }
+
+/**
+ * Use the `chrome.tabGroups` API to interact with the browser's tab grouping
+ * system. You can use this API to modify and rearrange tab groups in the
+ * browser.
+ */
+export namespace tabGroups {
+  /**
+   * Represents a group of tabs in a browser window.
+   * @since Chrome 88
+   */
+  export interface TabGroup {
+    /** Whether the group is collapsed. A collapsed group is one whose tabs are hidden. */
+    collapsed: boolean
+    /** The color of the group. */
+    color: `${Color}`
+    /** The ID of the group. Group IDs are unique within a browser session. */
+    id: number
+    /** The title of the group; this is optional. */
+    title?: string | undefined
+    /** The ID of the window that contains the group. */
+    windowId: number
+  }
+
+  /**
+   * The color of a tab group.
+   * @since Chrome 88
+   */
+  export enum Color {
+    GREY = 'grey',
+    BLUE = 'blue',
+    RED = 'red',
+    YELLOW = 'yellow',
+    GREEN = 'green',
+    PINK = 'pink',
+    PURPLE = 'purple',
+    CYAN = 'cyan',
+    ORANGE = 'orange',
+  }
+
+  /** Object passed to the move() function. */
+  export interface MoveProperties {
+    /** The window to move the group to. Defaults to the window the group is currently in. */
+    windowId?: number | undefined
+    /** The position to move the group to. Use -1 to place the group at the end of the window. */
+    index: number
+  }
+
+  /** Object passed to the update() function. */
+  export interface UpdateProperties {
+    /** Whether the group should be collapsed. */
+    collapsed?: boolean | undefined
+    /** The title of the group; pass an empty string to clear the title. */
+    title?: string | undefined
+    /** The color of the group. */
+    color?: `${Color}` | undefined
+  }
+
+  export interface QueryInfo {
+    /** Whether the groups are collapsed. */
+    collapsed?: boolean | undefined
+    /** The color of the groups. */
+    color?: `${Color}` | undefined
+    /** The title of the groups. */
+    title?: string | undefined
+    /** The ID of the parent window, or {@link windows.WINDOW_ID_CURRENT} for the current window. */
+    windowId?: number | undefined
+  }
+}
