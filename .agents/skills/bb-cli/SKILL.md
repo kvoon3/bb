@@ -3,13 +3,13 @@ name: bb-cli
 description: Use the bb CLI to install, run, and troubleshoot the browser bookmark bridge.
 metadata:
   author: Kevin Kwong
-  version: "2026.6.14"
+  version: "2026.6.22"
   source: Generated from local package `packages/cli`
 ---
 
-> The skill is based on `@kvoon/bb-cli` v0.1.1, generated at 2026-06-14.
+> The skill is based on `@kvoon/bb-cli` v0.2.2, generated at 2026-06-22.
 
-`bb` is the command-line interface for the BB Bookmarks Bridge. It installs from npm, talks to a local daemon, and lets agents read and manage browser bookmarks. The browser extension must be installed and connected for bookmark commands to work; the agent can guide you through installation but will not install it for you.
+`bb` is the command-line interface for the BB Bookmarks Bridge. It installs from npm, talks to a local daemon, and lets agents read and manage browser bookmarks and tabs. The browser extension must be installed and connected for bookmark and tab commands to work; the agent can guide you through installation but will not install it for you.
 
 ## Core References
 
@@ -34,7 +34,8 @@ metadata:
 
 | Topic | Description | Reference |
 |-------|-------------|-----------|
-| Tab Commands | List, create, update, activate, duplicate, move, and close browser tabs | [core-commands](references/core-commands.md) |
+| Tab Commands | List, create, update, activate, duplicate, move, and close browser tabs | [features-tab-commands](references/features-tab-commands.md) |
+| Tab Groups | List, create, update, move, and remove tab groups | [features-tab-groups](references/features-tab-groups.md) |
 
 ## Best Practices
 

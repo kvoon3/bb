@@ -46,6 +46,12 @@ Use `bb -h` to show all commands. Use `bb <command> --help` for command-specific
 | `bb tabs:update <id>`            | Update a browser tab (URL, pinned state)      |
 | `bb tabs:duplicate <id>`         | Duplicate a browser tab                       |
 | `bb tabs:move <id>`              | Move a browser tab to a position/window       |
+| `bb tabs:groups`                 | List tab groups                               |
+| `bb tabs:group`                  | Group one or more tabs                        |
+| `bb tabs:ungroup`                | Ungroup one or more tabs                      |
+| `bb tabs:groups:update <groupId>`| Update a tab group's title, color, or state   |
+| `bb tabs:groups:move <groupId>`  | Move a tab group to a position/window         |
+| `bb tabs:groups:remove <groupId>`| Ungroup all tabs in a tab group               |
 
 ## Key Points
 
@@ -54,7 +60,7 @@ Use `bb -h` to show all commands. Use `bb <command> --help` for command-specific
 - `bookmarks:create` and `bookmarks:move` support `--path` for path-based operations.
 - `bookmarks:remove-tree` supports `--path` for removing folder trees by path.
 - `bookmarks:organize` applies rules to group bookmarks into subfolders.
-- `tabs:*` commands require the daemon and browser extension, just like bookmark commands.
+- `tabs:*` and `tabs:groups:*` commands require the daemon and browser extension, just like bookmark commands.
 - If bookmark or tab commands fail with a 503 error, the browser extension is not connected. See the extension troubleshooting reference.
 
 <!--
