@@ -223,10 +223,23 @@ cli
   })
 
 cli
+  .command('bookmarks:children <id>', 'List children of a bookmark folder')
+  .action(async (id: string, options: GlobalOptions) => {
+    console.log(
+      JSON.stringify(
+        await request(options, `/bookmarks/${encodeURIComponent(id)}/children`),
+        null,
+        2,
+      ),
+    )
+  })
+
+cli
   .command('bookmarks:create', 'Create one or more bookmarks or folders')
   .option('--title <title>', 'Bookmark title')
   .option('--url <url>', 'Bookmark URL')
   .option('--parent-id <parentId>', 'Parent folder id')
+  .option('--path <path>', 'Target folder path (e.g. Websites/Personal). Creates missing folders.')
   .option('--index <index>', 'Position index within the parent folder')
   .option(
     '--file <path>',
@@ -236,7 +249,13 @@ cli
     '  # Create a single bookmark\n  $ bb bookmarks:create --title "Vite" --url https://vitejs.dev',
   )
   .example(
+    '  # Create a bookmark under a path, creating folders if needed\n  $ bb bookmarks:create --title "Vite" --url https://vitejs.dev --path Websites/Personal',
+  )
+  .example(
     '  # Create many bookmarks from a JSON file\n  $ bb bookmarks:create --file bookmarks.json',
+  )
+  .example(
+    '  # Batch create with a default path for items without parentId\n  $ bb bookmarks:create --file bookmarks.json --path Websites/Personal',
   )
   .action(
     async (
@@ -244,10 +263,15 @@ cli
         title?: string
         url?: string
         parentId?: string
+        path?: string
         index?: string
         file?: string
       },
     ) => {
+      if (options.parentId !== undefined && options.path !== undefined) {
+        throw new Error('Cannot use both --parent-id and --path')
+      }
+
       const items: Array<{ title?: string; url?: string; parentId?: string; index?: number }> =
         options.file
           ? await readBatchFile(options.file)
@@ -264,29 +288,38 @@ cli
         throw new Error('No bookmarks provided')
       }
 
-      if (options.file) {
-        const results = await Promise.allSettled(
-          items.map((item) =>
-            request(options, '/bookmarks', {
-              body: JSON.stringify(item),
-              headers: { 'content-type': 'application/json' },
-              method: 'POST',
+      async function createOne(item: {
+        title?: string
+        url?: string
+        parentId?: string
+        index?: number
+      }) {
+        const created = (await request(options, '/bookmarks', {
+          body: JSON.stringify(item),
+          headers: { 'content-type': 'application/json' },
+          method: 'POST',
+        })) as { id: string }
+
+        if (options.path && item.parentId === undefined) {
+          return request(options, '/bookmarks/move-by-path', {
+            body: JSON.stringify({
+              id: created.id,
+              path: options.path,
+              index: item.index,
             }),
-          ),
-        )
+            headers: { 'content-type': 'application/json' },
+            method: 'POST',
+          })
+        }
+
+        return created
+      }
+
+      if (options.file) {
+        const results = await Promise.allSettled(items.map((item) => createOne(item)))
         console.log(JSON.stringify(results, null, 2))
       } else {
-        console.log(
-          JSON.stringify(
-            await request(options, '/bookmarks', {
-              body: JSON.stringify(items[0]),
-              headers: { 'content-type': 'application/json' },
-              method: 'POST',
-            }),
-            null,
-            2,
-          ),
-        )
+        console.log(JSON.stringify(await createOne(items[0]), null, 2))
       }
     },
   )
@@ -745,7 +778,7 @@ async function request(options: GlobalOptions, path: string, init?: RequestInit)
     response = await fetch(url, init)
   } catch (error) {
     throw new Error(
-      `Could not reach daemon at ${baseUrl}. Start it with "pnpm dev:daemon". ${errorMessage(error)}`,
+      `Could not reach daemon at ${baseUrl}. Start it with "pnpm bb daemon". ${errorMessage(error)}`,
     )
   }
 

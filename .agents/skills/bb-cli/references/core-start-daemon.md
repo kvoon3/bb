@@ -39,7 +39,7 @@ bb daemon --host 127.0.0.1 --port 31337
 
 - The default host is `127.0.0.1` and the default port is `31337`.
 - The daemon must keep running while you use bookmark commands.
-- If the daemon is not reachable, the CLI reports: "Could not reach daemon at ... Start it with 'pnpm dev:daemon'."
+- If the daemon is not reachable, the CLI reports: "Could not reach daemon at ... Start it with 'pnpm bb daemon'."
 
 <!--
 Source references:

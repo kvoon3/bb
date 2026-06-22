@@ -13,6 +13,16 @@ When creating or updating agent skills for this project, follow the guidelines i
 
 After modifying `apps/extension/src/*`, build the extension and manually reload it in the browser before testing. MV3 service workers do not pick up code changes automatically.
 
+## Local CLI Testing
+
+When working inside this repository, always use the workspace version of the `bb` CLI so the daemon, CLI, and extension code stay in sync:
+
+```bash
+pnpm bb <command>
+```
+
+Avoid the globally installed `bb` for local development and testing, because it may be an older version and can drift from the workspace packages.
+
 <!--VITE PLUS START-->
 
 # Using Vite+, the Unified Toolchain for the Web

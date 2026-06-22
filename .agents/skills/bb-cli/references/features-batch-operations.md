@@ -21,6 +21,12 @@ bb bookmarks:create --file bookmarks.json
 ]
 ```
 
+You can also provide a default `--path` for items that do not specify a `parentId`:
+
+```bash
+bb bookmarks:create --file bookmarks.json --path Websites/Personal
+```
+
 ## Batch Update
 
 ```bash

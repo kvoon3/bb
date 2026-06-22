@@ -56,6 +56,7 @@ Commands:
   bookmarks:folders           List all bookmark folders
   bookmarks:search <query>    Search browser bookmarks
   bookmarks:get <id>          Read one browser bookmark node by id
+  bookmarks:children <id>     List children of a bookmark folder
   bookmarks:create            Create one or more bookmarks or folders
   bookmarks:update [id]       Update one or more bookmark titles or URLs
   bookmarks:move [id]         Move one or more bookmarks to another folder or position
@@ -80,6 +81,7 @@ For more info, run any command with the `--help` flag:
   $ bb bookmarks:folders --help
   $ bb bookmarks:search --help
   $ bb bookmarks:get --help
+  $ bb bookmarks:children --help
   $ bb bookmarks:create --help
   $ bb bookmarks:update --help
   $ bb bookmarks:move --help

@@ -1,11 +1,19 @@
 ---
 name: bb-cli-path-operations
-description: Move and remove bookmark folders by path, with automatic folder creation.
+description: Create or move bookmarks and remove folder trees by path, with automatic folder creation.
 ---
 
 # Path Operations
 
-Instead of remembering folder ids, you can move bookmarks or remove folder trees by their folder path. Missing folders are created automatically when moving.
+Instead of remembering folder ids, you can create or move bookmarks, or remove folder trees, by their folder path. Missing folders are created automatically when creating or moving bookmarks.
+
+## Create by Path
+
+```bash
+bb bookmarks:create --title Example --url https://example.com --path Websites/Personal
+```
+
+If `Websites` or `Personal` does not exist, it is created automatically. The bookmark is placed into the deepest folder.
 
 ## Move by Path
 
@@ -46,7 +54,7 @@ bb bookmarks:move --file moves.json --path Websites/Personal
 
 ## Key Points
 
-- `--path` and `--parent-id` cannot be used together.
+- `--path` and `--parent-id` cannot be used together in `bookmarks:create` or `bookmarks:move`.
 - Path resolution happens in the browser extension, so the tree state is always current.
 - Be careful with `remove-tree --path`: it deletes the folder and all descendants.
 

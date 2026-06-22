@@ -7,7 +7,7 @@
     "dev": "vp run website#dev",
     "dev:extension": "vp run extension#dev",
     "dev:daemon": "vp run @bb/daemon#dev",
-    "bb": "vp run @kvoon/bb-cli#dev",
+    "bb": "pnpm --filter @kvoon/bb-cli dev",
     "update": "tsx scripts/update-docs.ts",
     "prepare": "pnpm --filter @bb/shared build && pnpm --filter @bb/daemon build && pnpm run update",
     "up": "vpx taze -I major",

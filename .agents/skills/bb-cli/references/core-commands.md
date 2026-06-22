@@ -27,8 +27,10 @@ Use `bb -h` to show all commands. Use `bb <command> --help` for command-specific
 | `bb daemon`                      | Start the daemon in the foreground            |
 | `bb daemon:stop`                 | Stop the running daemon                       |
 | `bb bookmarks:tree`              | Read the full bookmark tree                   |
+| `bb bookmarks:folders`           | List all bookmark folders                     |
 | `bb bookmarks:search <query>`    | Search bookmarks                              |
 | `bb bookmarks:get <id>`          | Get one bookmark by id                        |
+| `bb bookmarks:children <id>`     | List children of a bookmark folder            |
 | `bb bookmarks:create`            | Create one or more bookmarks or folders       |
 | `bb bookmarks:update [id]`       | Update one or more bookmarks                  |
 | `bb bookmarks:move [id]`         | Move one or more bookmarks to a folder/path   |
@@ -36,14 +38,24 @@ Use `bb -h` to show all commands. Use `bb <command> --help` for command-specific
 | `bb bookmarks:remove-tree [id]`  | Recursively remove a folder by id or path     |
 | `bb bookmarks:unused`            | List bookmarks not visited recently           |
 | `bb bookmarks:organize <path>`   | Organize bookmarks in a folder by rules       |
+| `bb tabs`                        | List open browser tabs                        |
+| `bb tabs:create <url>`           | Open a new browser tab                        |
+| `bb tabs:reload <id>`            | Reload a browser tab                          |
+| `bb tabs:close <id>`             | Close a browser tab                           |
+| `bb tabs:activate <id>`          | Activate a browser tab                        |
+| `bb tabs:update <id>`            | Update a browser tab (URL, pinned state)      |
+| `bb tabs:duplicate <id>`         | Duplicate a browser tab                       |
+| `bb tabs:move <id>`              | Move a browser tab to a position/window       |
 
 ## Key Points
 
 - Use `--json` when piping output to other tools.
-- Most write commands support `--file <path>` for batch input.
-- `bookmarks:move` and `bookmarks:remove-tree` support `--path` for path-based operations.
+- Most bookmark write commands support `--file <path>` for batch input.
+- `bookmarks:create` and `bookmarks:move` support `--path` for path-based operations.
+- `bookmarks:remove-tree` supports `--path` for removing folder trees by path.
 - `bookmarks:organize` applies rules to group bookmarks into subfolders.
-- If bookmark commands fail with a 503 error, the browser extension is not connected. See the extension troubleshooting reference.
+- `tabs:*` commands require the daemon and browser extension, just like bookmark commands.
+- If bookmark or tab commands fail with a 503 error, the browser extension is not connected. See the extension troubleshooting reference.
 
 <!--
 Source references:

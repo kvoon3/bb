@@ -21,6 +21,9 @@ bb bookmarks:search vite
 
 # Get one node
 bb bookmarks:get <id>
+
+# List children of a folder
+bb bookmarks:children <id>
 ```
 
 ## Write Commands
@@ -31,11 +34,17 @@ bb bookmarks:get <id>
 # Create a single bookmark or folder
 bb bookmarks:create --title Example --url https://example.com --parent-id 2 --index 0
 
+# Create a bookmark inside a folder path, creating missing folders
+bb bookmarks:create --title Example --url https://example.com --path Websites/Personal
+
 # Create a folder
 bb bookmarks:create --title Archive --parent-id 1
 
 # Batch create from a JSON file
 bb bookmarks:create --file bookmarks.json
+
+# Batch create with a default path for items that do not specify parentId
+bb bookmarks:create --file bookmarks.json --path Websites/Personal
 ```
 
 JSON file shape for batch create:
@@ -140,8 +149,10 @@ bb bookmarks:unused --json
 ## Key Points
 
 - `bookmarks:create`, `bookmarks:update`, `bookmarks:move`, and `bookmarks:remove` accept `--file <path>` for batch operations. Use `--file=-` to read JSON from stdin.
+- `bookmarks:create --path` and `bookmarks:move --path` resolve folder paths in the browser extension. Missing folders are created automatically.
+- `bookmarks:create --path` and `--parent-id` cannot be used together.
+- `bookmarks:remove-tree --path` removes folder trees by path.
 - `bookmarks:organize` applies `--rule` patterns to a folder and moves matching bookmarks into subfolders. Use `--dry-run` to preview.
-- `bookmarks:move --path` and `bookmarks:remove-tree --path` resolve folder paths in the browser extension. Missing folders are created automatically when moving.
 - `bookmarks:remove` only removes single bookmarks or empty folders; use `remove-tree` for folders with children.
 - Batch results are returned as a JSON array of `{ status: "fulfilled", value: ... }` or `{ status: "rejected", reason: ... }`.
 - A 503 response means the browser extension is not connected. Check the extension status before retrying.

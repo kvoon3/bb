@@ -28,7 +28,13 @@ metadata:
 |-------|-------------|-----------|
 | Bookmark Commands | Read, search, create, update, move, remove, and organize bookmarks | [features-bookmarks-commands](references/features-bookmarks-commands.md) |
 | Batch Operations | Create, update, move, or remove many bookmarks from JSON files | [features-batch-operations](references/features-batch-operations.md) |
-| Path Operations | Move bookmarks or remove trees by folder path | [features-path-operations](references/features-path-operations.md) |
+| Path Operations | Create or move bookmarks, or remove trees, by folder path | [features-path-operations](references/features-path-operations.md) |
+
+### Tabs
+
+| Topic | Description | Reference |
+|-------|-------------|-----------|
+| Tab Commands | List, create, update, activate, duplicate, move, and close browser tabs | [core-commands](references/core-commands.md) |
 
 ## Best Practices
 

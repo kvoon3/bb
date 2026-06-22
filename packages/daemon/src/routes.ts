@@ -196,6 +196,13 @@ export function createAppRouter(onShutdown?: () => void) {
     }),
   )
 
+  router.get(
+    '/bookmarks/:id/children',
+    defineEventHandler(async (event) => {
+      return requireRpc().getChildren(decodeId(event))
+    }),
+  )
+
   router.patch(
     '/bookmarks/:id',
     defineEventHandler(async (event) => {
