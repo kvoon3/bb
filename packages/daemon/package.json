@@ -17,13 +17,13 @@
     "@bb/shared": "workspace:*",
     "birpc": "^4.0.0",
     "h3": "^1.15.11",
-    "ws": "^8.18.3"
+    "ws": "^8.21.0"
   },
   "devDependencies": {
-    "@types/node": "catalog:",
+    "@types/node": "^25.9.3",
     "@types/ws": "^8.18.1",
-    "tsx": "catalog:",
-    "typescript": "catalog:",
-    "vite-plus": "catalog:"
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vite-plus": "latest"
   }
 }
