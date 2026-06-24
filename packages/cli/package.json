@@ -23,6 +23,7 @@
     "dev": "tsx src/index.ts",
     "start": "node dist/index.mjs",
     "check": "vp check",
+    "test": "vp test run",
     "prepublishOnly": "vp run build",
     "bump": "bumpp"
   },
@@ -38,6 +39,6 @@
     "bumpp": "^11.1.0",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
-    "vite-plus": "latest"
+    "vite-plus": "catalog:"
   }
 }

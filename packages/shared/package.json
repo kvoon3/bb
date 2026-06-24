@@ -13,10 +13,11 @@
   "scripts": {
     "build": "vp pack",
     "dev": "vp pack --watch",
-    "check": "vp check"
+    "check": "vp check",
+    "test": "vp test run"
   },
   "devDependencies": {
     "typescript": "^6.0.3",
-    "vite-plus": "latest"
+    "vite-plus": "catalog:"
   }
 }

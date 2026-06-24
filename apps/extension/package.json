@@ -20,6 +20,6 @@
     "changelogithub": "^14.0.0",
     "typescript": "^6.0.3",
     "vite": "catalog:",
-    "vite-plus": "latest"
+    "vite-plus": "catalog:"
   }
 }
