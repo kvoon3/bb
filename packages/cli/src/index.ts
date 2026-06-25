@@ -5,6 +5,7 @@ import { startDaemon } from '@bb/daemon'
 import {
   DEFAULT_DAEMON_HOST,
   DEFAULT_DAEMON_PORT,
+  collectUnusedBookmarkItems,
   errorMessage,
   findNodeByPath,
   type bookmarks,
@@ -13,8 +14,6 @@ import { cac } from 'cac'
 
 import packageJson from '../package.json' with { type: 'json' }
 import { matchRule, normalizeRules } from './rules.js'
-import { daemonBaseUrl } from './url.js'
-
 const cli = cac('bb')
 
 type GlobalOptions = {
@@ -598,10 +597,6 @@ cli
         throw new Error('Cannot use both --parent-id and --path')
       }
 
-      if (options.parentId !== undefined && options.path !== undefined) {
-        throw new Error('Cannot use both --parent-id and --path')
-      }
-
       const items: Array<{ id: string; parentId?: string; index?: number }> = options.file
         ? await readBatchFile(options.file)
         : [
@@ -753,39 +748,7 @@ cli
     const threshold = Date.now() - days * 24 * 60 * 60 * 1000
 
     const tree = await request(options, '/bookmarks/tree')
-
-    const items: Array<{
-      title: string
-      url: string
-      id: string
-      dateLastUsed?: number
-      dateAdded: number
-      folderPath: string
-    }> = []
-
-    function walk(nodes: Array<Record<string, unknown>>, path: string) {
-      for (const n of nodes) {
-        const title = typeof n.title === 'string' ? n.title : ''
-        const nodePath = path ? `${path} / ${title}` : title
-        const url = typeof n.url === 'string' ? n.url : ''
-        if (url) {
-          items.push({
-            title: title || url,
-            url,
-            id: String(n.id),
-            dateLastUsed: typeof n.dateLastUsed === 'number' ? n.dateLastUsed : undefined,
-            dateAdded: Number(n.dateAdded),
-            folderPath: path,
-          })
-        }
-        if (Array.isArray(n.children)) {
-          walk(n.children as Array<Record<string, unknown>>, nodePath)
-        }
-      }
-    }
-
-    walk(tree as Array<Record<string, unknown>>, '')
-
+    const items = collectUnusedBookmarkItems(tree as unknown[])
     const unused = items.filter((n) => !n.dateLastUsed || n.dateLastUsed < threshold)
     unused.sort((a, b) => {
       if (!a.dateLastUsed) return 1
@@ -960,10 +923,7 @@ cli.version(packageJson.version)
 cli.parse(process.argv[2] === '--' ? process.argv.toSpliced(2, 1) : process.argv)
 
 async function request(options: GlobalOptions, path: string, init?: RequestInit) {
-  const baseUrl = daemonBaseUrl(
-    Number(options.port ?? DEFAULT_DAEMON_PORT),
-    options.host ?? DEFAULT_DAEMON_HOST,
-  )
+  const baseUrl = `http://${options.host ?? DEFAULT_DAEMON_HOST}:${Number(options.port ?? DEFAULT_DAEMON_PORT)}`
   const url = `${baseUrl}${path}`
 
   let response: Response

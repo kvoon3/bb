@@ -1,5 +1,6 @@
+import { matchesGlob } from 'node:path'
+
 import type { bookmarks } from '@bb/shared'
-import picomatch from 'picomatch'
 
 export function normalizeRules(input: string | string[] | undefined): Array<{
   field: 'url' | 'title'
@@ -42,6 +43,9 @@ export function matchRule(
   return undefined
 }
 
+// ponytail: `node:path.matchesGlob` (stdlib) replaces picomatch. `*` does not match `/`
+// (fine for URL rules — users write `**/github.com/**`, not bare `*github*` on URLs).
+// Swap back to picomatch if title-based rules ever need `*` to cross word boundaries.
 export function matchGlob(pattern: string, value: string): boolean {
-  return picomatch.isMatch(value, pattern)
+  return matchesGlob(value, pattern)
 }

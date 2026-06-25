@@ -126,6 +126,49 @@ export async function ensurePath(
   return current
 }
 
+export function collectUnusedBookmarkItems(nodes: unknown[]): Array<{
+  title: string
+  url: string
+  id: string
+  dateLastUsed?: number
+  dateAdded: number
+  folderPath: string
+}> {
+  const items: Array<{
+    title: string
+    url: string
+    id: string
+    dateLastUsed?: number
+    dateAdded: number
+    folderPath: string
+  }> = []
+
+  function walk(nnodes: unknown[], path: string) {
+    for (const n of nnodes) {
+      const node = n as Record<string, unknown>
+      const title = typeof node.title === 'string' ? node.title : ''
+      const nodePath = path ? `${path} / ${title}` : title
+      const nodeUrl = typeof node.url === 'string' ? node.url : ''
+      if (nodeUrl) {
+        items.push({
+          title: title || nodeUrl,
+          url: nodeUrl,
+          id: String(node.id),
+          dateLastUsed: typeof node.dateLastUsed === 'number' ? node.dateLastUsed : undefined,
+          dateAdded: Number(node.dateAdded),
+          folderPath: path,
+        })
+      }
+      if (Array.isArray(node.children)) {
+        walk(node.children, nodePath)
+      }
+    }
+  }
+
+  walk(nodes, '')
+  return items
+}
+
 export function errorMessage(error: unknown): string {
   if (error instanceof Error) return error.message
   if (

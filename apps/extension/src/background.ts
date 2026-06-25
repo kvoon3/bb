@@ -1,20 +1,19 @@
 import {
   DEFAULT_DAEMON_HOST,
   DEFAULT_DAEMON_PORT,
+  EXTENSION_WS_PATH,
   type ExtensionRpc,
   type bookmarks,
   type tabGroups,
   findNodeByPath,
   ensurePath,
   getFoldersFromTree,
+  errorMessage,
 } from '@bb/shared'
-import { errorMessage } from '@bb/shared'
-
-import { daemonWebSocketUrl } from './url.js'
 
 const offscreenPath = 'offscreen.html'
 const offscreenUrl = chrome.runtime.getURL(offscreenPath)
-const daemonUrl = daemonWebSocketUrl(DEFAULT_DAEMON_PORT, DEFAULT_DAEMON_HOST)
+const daemonUrl = `ws://${DEFAULT_DAEMON_HOST}:${DEFAULT_DAEMON_PORT}${EXTENSION_WS_PATH}`
 
 let offscreenConnected = false
 

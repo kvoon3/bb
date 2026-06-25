@@ -75,9 +75,6 @@ importers:
       cac:
         specifier: ^7.0.0
         version: 7.0.0
-      picomatch:
-        specifier: ^4.0.4
-        version: 4.0.4
     devDependencies:
       '@bb/daemon':
         specifier: workspace:*
@@ -88,9 +85,6 @@ importers:
       '@types/node':
         specifier: ^25.9.3
         version: 25.9.4
-      '@types/picomatch':
-        specifier: ^4.0.3
-        version: 4.0.3
       bumpp:
         specifier: ^11.1.0
         version: 11.1.0
@@ -776,9 +770,6 @@ packages:
 
   '@types/node@25.9.4':
     resolution: {integrity: sha512-dszCsrKb5U7ZsVZBWiHFklTloVl0mSEnWH/iZXfZUlI4rzCUnsvGmgqfuVRHL54ugE7/wRuxEIXRa2iMZ+BG6g==}
-
-  '@types/picomatch@4.0.3':
-    resolution: {integrity: sha512-iG0T6+nYJ9FAPmx9SsUlnwcq1ZVRuCXcVEvWnntoPlrOpwtSTKNDC9uVAxTsC3PUvJ+99n4RpAcNgBbHX3JSnQ==}
 
   '@types/ws@8.18.1':
     resolution: {integrity: sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg==}
@@ -2124,8 +2115,6 @@ snapshots:
   '@types/node@25.9.4':
     dependencies:
       undici-types: 7.24.6
-
-  '@types/picomatch@4.0.3': {}
 
   '@types/ws@8.18.1':
     dependencies:

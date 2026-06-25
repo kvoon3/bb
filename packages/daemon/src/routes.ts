@@ -1,4 +1,7 @@
 import {
+  collectUnusedBookmarkItems,
+  DEFAULT_DAEMON_HOST,
+  DEFAULT_DAEMON_PORT,
   errorMessage,
   EXTENSION_WS_PATH,
   type ExtensionRpc,
@@ -18,7 +21,9 @@ import {
 } from 'h3'
 import type { WebSocket } from 'ws'
 
-import { host, port, requestTimeoutMs } from './config.js'
+const host = process.env.BB_DAEMON_HOST ?? DEFAULT_DAEMON_HOST
+const port = Number(process.env.BB_DAEMON_PORT ?? DEFAULT_DAEMON_PORT)
+const requestTimeoutMs = Number(process.env.BB_EXTENSION_TIMEOUT_MS ?? 10_000)
 
 let extensionSocket: WebSocket | undefined
 let extensionRpc: BirpcReturn<ExtensionRpc> | undefined
@@ -209,7 +214,7 @@ export function createAppRouter(onShutdown?: () => void) {
         ...rawChanges,
         color: rawChanges.color as `${tabGroups.Color}` | undefined,
       }
-      return requireRpc().updateTabGroup(decodeGroupId(event), changes)
+      return requireRpc().updateTabGroup(decodeTabId(event), changes)
     }),
   )
 
@@ -222,14 +227,14 @@ export function createAppRouter(onShutdown?: () => void) {
         index: number
         windowId?: number
       }
-      return requireRpc().moveTabGroup(decodeGroupId(event), moveProperties)
+      return requireRpc().moveTabGroup(decodeTabId(event), moveProperties)
     }),
   )
 
   router.delete(
     '/tabs/groups/:id',
     defineEventHandler(async (event) => {
-      await requireRpc().removeTabGroup(decodeGroupId(event))
+      await requireRpc().removeTabGroup(decodeTabId(event))
       return { ok: true }
     }),
   )
@@ -398,44 +403,10 @@ function decodeTabId(event: H3Event): number {
   return Number(getRouterParams(event).id)
 }
 
-function decodeGroupId(event: H3Event): number {
-  return Number(getRouterParams(event).id)
-}
-
 function renderUnusedHtml(nodes: unknown[], days: number): string {
   const threshold = Date.now() - days * 24 * 60 * 60 * 1000
-  const items: Array<{
-    title: string
-    url: string
-    dateLastUsed?: number
-    dateAdded: number
-    folderPath: string
-  }> = []
-
-  function walk(nnodes: unknown[], path: string) {
-    for (const n of nnodes) {
-      const node = n as Record<string, unknown>
-      const title = typeof node.title === 'string' ? node.title : ''
-      const nodePath = path ? `${path} / ${title}` : title
-      const nodeUrl = typeof node.url === 'string' ? node.url : ''
-      if (nodeUrl) {
-        items.push({
-          title: title || nodeUrl,
-          url: nodeUrl,
-          dateLastUsed: typeof node.dateLastUsed === 'number' ? node.dateLastUsed : undefined,
-          dateAdded: Number(node.dateAdded),
-          folderPath: path,
-        })
-      }
-      if (Array.isArray(node.children)) {
-        walk(node.children, nodePath)
-      }
-    }
-  }
-
-  walk(nodes, '')
-
-  const unused = items.filter((n) => !n.dateLastUsed || n.dateLastUsed < threshold)
+  const allItems = collectUnusedBookmarkItems(nodes)
+  const unused = allItems.filter((n) => !n.dateLastUsed || n.dateLastUsed < threshold)
   unused.sort((a, b) => {
     if (!a.dateLastUsed) return 1
     if (!b.dateLastUsed) return -1

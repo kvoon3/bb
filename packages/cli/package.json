@@ -28,14 +28,12 @@
     "bump": "bumpp"
   },
   "dependencies": {
-    "cac": "^7.0.0",
-    "picomatch": "^4.0.4"
+    "cac": "^7.0.0"
   },
   "devDependencies": {
     "@bb/daemon": "workspace:*",
     "@bb/shared": "workspace:*",
     "@types/node": "^25.9.3",
-    "@types/picomatch": "^4.0.3",
     "bumpp": "^11.1.0",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
